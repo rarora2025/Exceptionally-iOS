@@ -120,6 +120,9 @@ export default function InviteScreen() {
         style={styles.cta}
         onPress={() => go(fromPeople ? 'people' : 'home')}
       />
+      <Pressable onPress={() => patch({ screen: 'cLand', cTurn: 0 })} style={styles.previewBtn} hitSlop={8}>
+        <Text style={styles.previewText}>Preview what your people see →</Text>
+      </Pressable>
     </Screen>
   );
 }
@@ -196,4 +199,6 @@ const styles = StyleSheet.create({
   bubbleText: { fontFamily: font.medium, fontSize: 14.5, lineHeight: 21, color: colors.ink },
 
   cta: { marginTop: 22 },
+  previewBtn: { alignItems: 'center', paddingVertical: 14 },
+  previewText: { fontFamily: font.bold, fontSize: 14.5, color: colors.link },
 });

@@ -378,4 +378,92 @@ export const TOOLS: Tool[] = [
 
 export const tagBg = (tag: string): string => (['Gap', 'Cut', 'Partial'].includes(tag) ? colors.surfaceSunken : colors.accent);
 
+// ---- Deep artifact views: pull quotes + transcript ----
+export const PULLS: Record<string, string[]> = {
+  david: [
+    'If a thread has been going for days someone will say get Noah in here.',
+    'He writes the problem down. Sounds trivial. It is not.',
+    'We ran a week of research instead of shipping the wrong one.',
+  ],
+  maya: [
+    'He stops the back-and-forth and writes down what each person is assuming.',
+    'I have seen him do it in planning too, not just in a crisis.',
+    'We left with one scoped test instead of a plan to argue about.',
+  ],
+  jen: [
+    'He did not even present it. He just left it in the channel.',
+    'Nobody argued with it, which never happens.',
+    'Six weeks of debate closed by two pages.',
+  ],
+};
+
+export const TRANSCRIPTS: Record<string, { q: string; a: string }[]> = {
+  david: [
+    { q: 'What do people tend to come to Noah for?', a: 'Usually when something has gone circular. If a thread has been going for days someone will say get Noah in here.' },
+    { q: 'What does he actually do?', a: 'He writes the problem down. Sounds trivial. It is not, because most of the time nobody has written it down and everyone assumes theirs is the one being solved.' },
+    { q: 'What changed the last time you saw it?', a: 'A roadmap thread, four days old, two features. He posted one paragraph describing what we did not know. We ran a week of research instead of shipping the wrong one.' },
+    { q: 'What might another good manager have done?', a: 'Called a meeting and made a decision. Which would have been faster and probably wrong.' },
+  ],
+  maya: [
+    { q: 'When have you seen Noah at his best?', a: 'A launch review where three teams each had a different story for why we were slipping.' },
+    { q: 'What did he do?', a: 'He mapped what each team was assuming and pointed out nobody had decided who owned pricing.' },
+    { q: 'What was the effect?', a: 'We left with one scoped test instead of a plan to argue about.' },
+    { q: 'Is it a one-off?', a: 'No. I have seen him do it in planning and in personnel decisions too.' },
+  ],
+  jen: [
+    { q: 'How does Noah show up in writing?', a: 'He writes the short document that ends a long dispute, and he leaves it rather than presenting it.' },
+    { q: 'A specific example?', a: 'Six weeks of pricing debate. He dropped a two-page one-pager in the channel and left.' },
+    { q: 'What happened?', a: 'The argument closed by the next morning. Nobody argued with it, which never happens.' },
+  ],
+  daily: [
+    { q: 'What does your best work look like?', a: 'Two days with no meetings. I untangled a migration nobody had scoped just by writing down what each team thought they owned.' },
+    { q: 'What drains you?', a: 'Repeating the same explanation across five forums and chasing people to keep to it.' },
+  ],
+  delegated: [
+    { q: 'What are you actually chasing here?', a: 'Not how agents work. Why people hand some decisions over instantly and refuse others that seem equally low stakes.' },
+    { q: 'Where does the usual explanation break?', a: 'People delegate things the model is worse at and refuse things it is better at. Accuracy cannot be it.' },
+  ],
+};
+
+// ---- Synthesis (narrative builder) ----
+export const SHELF = [
+  { key: 'david', title: 'The roadmap thread', author: 'David Okonkwo' },
+  { key: 'maya', title: 'The launch review', author: 'Maya Fischer' },
+  { key: 'priya', title: "His dad's care", author: 'Priya Raman' },
+  { key: 'jen', title: 'The pricing one-pager', author: 'Jen Okafor' },
+  { key: 'daily', title: 'Two days, no meetings', author: 'Noah' },
+  { key: 'delegated', title: 'AI agents, three weeks in', author: 'Noah' },
+  { key: 'answer', title: 'Interview answer, v3', author: 'Noah' },
+];
+
+export const SYNTH_OUTPUTS = [
+  { key: 'narrative', label: 'A one-page narrative', format: '1 page' },
+  { key: 'answer', label: 'Answer to "what are your strengths?"', format: 'Interview' },
+  { key: 'about', label: 'A LinkedIn About section', format: 'Profile' },
+  { key: 'pitch', label: 'A 30-second pitch', format: 'Spoken' },
+  { key: 'cover', label: 'A cover letter opening', format: 'Application' },
+];
+
+export const BUILD_STEPS = ['Reading what it is for…', 'Opening the artifacts you picked…', 'Finding what they share…', 'Writing it up…'];
+
+export const NARRATIVE = {
+  kicker: 'Narrative · 1 page',
+  title: 'Noah Reyes — what he does that others do not',
+  body:
+    'The clearest version of Noah shows up when a group has stopped making progress.\n\nAt a launch review last May, three teams were each solving a different version of the same problem. He wrote down what each team was assuming, which made it obvious nobody had decided who owned pricing. The group left with one test to run that week instead of a plan to argue about.\n\nHis previous manager describes the same behaviour on a four-day roadmap thread: one paragraph naming what was unknown, and a week of research instead of shipping the wrong feature.\n\nIt is not a work skill he acquired. A friend describes him doing it with his family years earlier, when an argument about care homes turned out to be an argument about who had authority to decide.\n\nWhat this predicts: he is most valuable early, where authority is unclear and the real question has not been framed. What it costs: the maintenance work afterwards is the part that empties him.',
+  sources: 'Built from 3 artifacts: Maya Fischer (May 2026), David Okonkwo (Mar 2026), Priya Raman (Apr 2026).',
+};
+
+// ---- Creation flow ("someone interviews you") ----
+export const CREATION_QUESTIONS = [
+  {
+    q: 'When you think about what is genuinely exceptional or unusually distinctive about Noah, what comes to mind first?',
+    canned:
+      'He notices when a discussion has stopped going anywhere. He stops the back-and-forth, writes down what each person is assuming, then asks which decision we are actually trying to make.',
+  },
+  { q: 'What changes after he does that?', canned: 'The argument usually collapses. People realise they were solving different problems. We agree on one small thing to test instead of debating the whole plan.' },
+  { q: "What's a recent example?", canned: 'The launch review in May. Three teams were solving different versions of the same problem. Noah mapped the assumptions on a whiteboard, pointed out we had never decided who owned pricing, and we left with a first test.' },
+  { q: 'What might another capable person have done instead?', canned: 'Most people would have run the meeting to the agenda and taken actions. Noah stops and finds the decision nobody made. I have seen him do it in planning too, not just in a crisis.' },
+];
+
 export { tint };

@@ -20,7 +20,14 @@ export type Screen =
   | 'fascSeed'
   | 'fascInterview'
   | 'fascResult'
-  | 'toolRun';
+  | 'toolRun'
+  | 'transcript'
+  | 'synthesis'
+  | 'cLand'
+  | 'cIntro'
+  | 'cInterview'
+  | 'cReview'
+  | 'cDone';
 
 export type Invite = { name: string; state: string };
 
@@ -70,6 +77,16 @@ export interface AppState {
   toolLink: string;
   toolRole: string;
   toolHorizon: string;
+
+  // synthesis (narrative builder)
+  synthOutput: string;
+  synthPicked: Record<string, boolean>;
+  building: boolean;
+  narrativeShown: boolean;
+  // creation flow (someone interviews you)
+  cTurn: number;
+  reviewAction: string;
+  attribution: string;
 }
 
 export const initialState: AppState = {
@@ -110,6 +127,14 @@ export const initialState: AppState = {
   toolLink: '',
   toolRole: '',
   toolHorizon: 'Now',
+
+  synthOutput: 'narrative',
+  synthPicked: { david: true, maya: true, priya: true },
+  building: false,
+  narrativeShown: false,
+  cTurn: 0,
+  reviewAction: 'confirm',
+  attribution: 'name',
 };
 
 type Ctx = {

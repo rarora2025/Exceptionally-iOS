@@ -20,11 +20,15 @@ import FascInterviewScreen from './screens/FascInterviewScreen';
 import ToolsScreen from './screens/ToolsScreen';
 import ToolRunScreen from './screens/ToolRunScreen';
 import ChatScreen from './screens/ChatScreen';
+import TranscriptScreen from './screens/TranscriptScreen';
+import SynthesisScreen from './screens/SynthesisScreen';
+import { CLandScreen, CIntroScreen, CInterviewScreen, CReviewScreen, CDoneScreen } from './screens/CreationFlow';
 
 // Screens that show the floating tab bar.
 const TABBED: Screen[] = [
   'home', 'profile', 'tools', 'people', 'artifact',
   'fascHub', 'fascBucket', 'fascSeed', 'fascInterview', 'fascResult', 'toolRun',
+  'transcript', 'synthesis',
 ];
 
 function ScreenFor({ screen }: { screen: Screen }) {
@@ -46,6 +50,13 @@ function ScreenFor({ screen }: { screen: Screen }) {
     case 'tools': return <ToolsScreen />;
     case 'toolRun': return <ToolRunScreen />;
     case 'chat': return <ChatScreen />;
+    case 'transcript': return <TranscriptScreen />;
+    case 'synthesis': return <SynthesisScreen />;
+    case 'cLand': return <CLandScreen />;
+    case 'cIntro': return <CIntroScreen />;
+    case 'cInterview': return <CInterviewScreen />;
+    case 'cReview': return <CReviewScreen />;
+    case 'cDone': return <CDoneScreen />;
     default: return <HomeScreen />;
   }
 }

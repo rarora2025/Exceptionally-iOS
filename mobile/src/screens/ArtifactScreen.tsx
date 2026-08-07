@@ -5,7 +5,7 @@ import { Screen, T, BackLink, Avatar } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, initials } from '../state/store';
-import { ARTIFACTS } from '../data/content';
+import { ARTIFACTS, PULLS } from '../data/content';
 
 export default function ArtifactScreen() {
   const { state, patch, go } = useStore();
@@ -61,6 +61,26 @@ export default function ArtifactScreen() {
         <Text style={styles.quoteText}>{a.quote}</Text>
         <Text style={styles.quoteAuthor}>— {a.author}</Text>
       </View>
+
+      {PULLS[state.artifactKey]?.length ? (
+        <>
+          <T variant="label" style={styles.h}>
+            In their words
+          </T>
+          <View style={{ gap: 11, marginTop: 12 }}>
+            {PULLS[state.artifactKey].map((p, i) => (
+              <Text key={i} style={styles.pull}>
+                "{p}"
+              </Text>
+            ))}
+          </View>
+
+          <Pressable onPress={() => go('transcript')} style={styles.transcriptBtn}>
+            <Text style={styles.transcriptText}>Open the transcript</Text>
+            <Ionicons name="arrow-forward" size={16} color={colors.ink} />
+          </Pressable>
+        </>
+      ) : null}
 
       {/* feedback controls */}
       <View style={styles.feedback}>
@@ -119,6 +139,19 @@ const styles = StyleSheet.create({
   quoteMark: { fontFamily: font.display, fontSize: 44, color: colors.accent, height: 34, lineHeight: 44 },
   quoteText: { fontFamily: font.semi, fontSize: 17, lineHeight: 25, color: colors.ink, marginTop: 4 },
   quoteAuthor: { fontFamily: font.bold, fontSize: 13.5, color: colors.muted, marginTop: 12 },
+
+  pull: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft, paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.lineStrong },
+  transcriptBtn: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 17,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  transcriptText: { fontFamily: font.displaySemi, fontSize: 16, color: colors.ink },
 
   feedback: {
     marginTop: 22,

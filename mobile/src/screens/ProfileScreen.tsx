@@ -27,6 +27,14 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
+      <Pressable onPress={() => go('synthesis')} style={styles.buildCard}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.buildTitle}>Build my narrative</Text>
+          <Text style={styles.buildSub}>Turn your artifacts into a one-page story</Text>
+        </View>
+        <Ionicons name="arrow-forward" size={18} color={colors.accentInk} />
+      </Pressable>
+
       <T variant="label" style={styles.section}>
         Super strengths
       </T>
@@ -124,6 +132,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   inviteText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
+
+  buildCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 24,
+    padding: 18,
+    borderRadius: radius.lg,
+    backgroundColor: colors.accent,
+    ...shadow.accent,
+  },
+  buildTitle: { fontFamily: font.displayBold, fontSize: 19, letterSpacing: -0.5, color: colors.accentInk },
+  buildSub: { fontFamily: font.semi, fontSize: 13, color: colors.accentInk, marginTop: 4, opacity: 0.75 },
 
   section: { marginTop: 30 },
   section2: { marginTop: 30, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
