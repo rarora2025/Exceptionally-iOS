@@ -13,9 +13,18 @@ export type Screen =
   | 'home'
   | 'profile'
   | 'tools'
-  | 'chat';
+  | 'chat'
+  | 'artifact'
+  | 'fascHub'
+  | 'fascBucket'
+  | 'fascSeed'
+  | 'fascInterview'
+  | 'fascResult'
+  | 'toolRun';
 
 export type Invite = { name: string; state: string };
+
+export type ArtifactStyle = { emoji?: string; color?: string };
 
 export interface AppState {
   screen: Screen;
@@ -37,6 +46,30 @@ export interface AppState {
   invites: Invite[];
   copied: boolean;
   msgCopied: boolean;
+
+  // home
+  problemDraft: string;
+  notifsOn: boolean;
+  // chat
+  chatDraft: string;
+  chatLog: { role: 'me' | 'ai'; text: string }[];
+  // profile artifact editing
+  fascStyle: Record<string, ArtifactStyle>;
+  fascPicker: string | null;
+  artifactKey: string; // which artifact detail is open
+  // fascinations
+  fascBucket: string;
+  fascSeed: string;
+  fTurn: number;
+  fTranscript: string;
+  // tools
+  toolKey: string | null;
+  toolPhase: 'idle' | 'running' | 'done';
+  toolStep: number;
+  toolPaste: string;
+  toolLink: string;
+  toolRole: string;
+  toolHorizon: string;
 }
 
 export const initialState: AppState = {
@@ -58,6 +91,25 @@ export const initialState: AppState = {
   ],
   copied: false,
   msgCopied: false,
+
+  problemDraft: '',
+  notifsOn: false,
+  chatDraft: '',
+  chatLog: [],
+  fascStyle: {},
+  fascPicker: null,
+  artifactKey: 'david',
+  fascBucket: 'domains',
+  fascSeed: 'AI agents',
+  fTurn: 0,
+  fTranscript: '',
+  toolKey: null,
+  toolPhase: 'idle',
+  toolStep: 0,
+  toolPaste: '',
+  toolLink: '',
+  toolRole: '',
+  toolHorizon: 'Now',
 };
 
 type Ctx = {
