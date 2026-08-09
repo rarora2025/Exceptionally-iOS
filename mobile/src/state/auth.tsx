@@ -53,7 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = useCallback<AuthCtx['signInWithGoogle']>(async () => {
-    const redirectTo = AuthSession.makeRedirectUri({ scheme: 'exceptionally', path: 'auth-callback' });
+    // Adaptive: in Expo Go this returns an exp:// proxy URL that Expo Go can
+    // handle; in a standalone/dev build it uses the app's `exceptionally://`
+    // scheme. Both must be allow-listed in Supabase → Auth → URL Configuration.
+    const redirectTo = AuthSession.makeRedirectUri({ path: 'auth-callback' });
+    if (__DEV__) console.log('[auth] google redirectTo =', redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo, skipBrowserRedirect: true },
