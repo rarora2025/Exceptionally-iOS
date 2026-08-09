@@ -27,6 +27,12 @@
     "plugins": [
       "expo-font",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "95c1bd55-fa70-43a0-95ec-47a13cd6c61e"
+      }
+    },
+    "owner": "rarora2025"
   }
 }

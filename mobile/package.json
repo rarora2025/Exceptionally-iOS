@@ -12,6 +12,7 @@
     "expo-auth-session": "~57.0.6",
     "expo-clipboard": "~57.0.1",
     "expo-crypto": "~57.0.1",
+    "expo-dev-client": "~57.0.10",
     "expo-font": "~57.0.1",
     "expo-haptics": "~57.0.1",
     "expo-status-bar": "~57.0.1",
@@ -27,7 +28,7 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
+    "android": "expo run:android",
     "ios": "bash scripts/ios.sh",
     "ios:expo": "expo start --ios",
     "web": "expo start --web"
