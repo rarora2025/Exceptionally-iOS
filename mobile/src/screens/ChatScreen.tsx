@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { T, BackLink } from '../ui/kit';
 import { colors, font, radius } from '../theme';
 import { useStore } from '../state/store';
+import { addChatMessage } from '../lib/db';
 
 const AI_REPLY =
   'Good question. Based on your artifacts, the strongest thread is that you name the decision a group has not made and put it in writing. Want me to pull the two examples that prove it?';
@@ -17,8 +18,10 @@ export default function ChatScreen() {
     const text = state.chatDraft.trim();
     if (!text) return;
     patch({ chatLog: [...state.chatLog, { role: 'me', text }], chatDraft: '' });
+    addChatMessage('me', text);
     setTimeout(() => {
       patch({ chatLog: [...state.chatLog, { role: 'me', text }, { role: 'ai', text: AI_REPLY }] });
+      addChatMessage('ai', AI_REPLY);
     }, 600);
   };
 

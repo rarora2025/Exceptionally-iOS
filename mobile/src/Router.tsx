@@ -70,18 +70,20 @@ function ScreenFor({ screen }: { screen: Screen }) {
 }
 
 export default function Router() {
-  const { state, go } = useStore();
+  const { state, go, hydrate, reset } = useStore();
   const { configured, loading, session } = useAuth();
 
-  // Session gate (only when Supabase is configured; otherwise mock mode).
+  // Session gate + data hydration (only when Supabase is configured).
   React.useEffect(() => {
     if (!configured || loading) return;
-    if (session && (state.screen === 'auth' || state.screen === 'login')) {
-      go('home');
-    } else if (!session && !PUBLIC_SCREENS.includes(state.screen)) {
-      go('auth');
+    if (session) {
+      if (!state.hydrated) hydrate();
+      if (state.screen === 'auth' || state.screen === 'login') go('home');
+    } else {
+      if (state.hydrated) reset();
+      else if (!PUBLIC_SCREENS.includes(state.screen)) go('auth');
     }
-  }, [configured, loading, session, state.screen, go]);
+  }, [configured, loading, session, state.screen, state.hydrated, go, hydrate, reset]);
 
   if (configured && loading) {
     return (

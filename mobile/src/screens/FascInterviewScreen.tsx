@@ -5,7 +5,11 @@ import { Screen, T, Button, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
+import { addFascInterview } from '../lib/db';
 import { FASC_QUESTIONS } from '../data/content';
+
+const RESULT_TEXT =
+  'You keep circling who gets to make the call. Not the technology, the accountability: when people hand a decision to an agent versus when they refuse to, and who ends up answering for it.';
 
 // Combines the seeded interview and its result. While fTurn is within range we
 // show the current question and a canned answer; after the last turn, the result.
@@ -40,7 +44,15 @@ export default function FascInterviewScreen() {
 
         <Button
           title="Save to profile"
-          onPress={() => patch({ screen: 'profile', fTurn: 0 })}
+          onPress={() => {
+            addFascInterview({
+              bucket: state.fascBucket,
+              seed: state.fascSeed,
+              transcript: FASC_QUESTIONS.map((q) => ({ q: q.q, a: q.canned })),
+              result: RESULT_TEXT,
+            });
+            patch({ screen: 'profile', fTurn: 0 });
+          }}
           style={{ marginTop: 22 }}
         />
         <Button

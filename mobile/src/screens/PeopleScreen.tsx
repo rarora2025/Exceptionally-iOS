@@ -5,7 +5,8 @@ import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, initials } from '../state/store';
 
-const MY_PEOPLE = [
+// Fallback for mock mode (before Supabase hydration populates state.people).
+const FALLBACK_PEOPLE = [
   { name: 'David Okonkwo', detail: 'd.okonkwo@email.com', tint: colors.accent, status: 'Answered' },
   { name: 'Maya Fischer', detail: 'maya.fischer@email.com', tint: colors.tintBlue, status: 'Answered' },
   { name: 'Priya Raman', detail: 'priya.raman@email.com', tint: colors.tintPeach, status: 'Joined' },
@@ -19,17 +20,18 @@ const statusStyle = (s: string) => {
 };
 
 export default function PeopleScreen() {
-  const { patch, go } = useStore();
+  const { state, patch, go } = useStore();
+  const people = state.people.length ? state.people : FALLBACK_PEOPLE;
   return (
     <Screen contentStyle={styles.wrap}>
       <BackLink label="Profile" onPress={() => go('profile')} />
       <View style={styles.head}>
         <T variant="title">My people</T>
-        <Text style={styles.count}>4 invited</Text>
+        <Text style={styles.count}>{people.length} invited</Text>
       </View>
 
       <View style={{ gap: 8, marginTop: 20 }}>
-        {MY_PEOPLE.map((p) => {
+        {people.map((p) => {
           const st = statusStyle(p.status);
           return (
             <View key={p.name} style={styles.row}>

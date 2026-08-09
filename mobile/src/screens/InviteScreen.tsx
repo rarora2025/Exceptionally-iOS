@@ -7,7 +7,7 @@ import { useStore, initials, inviteLinkFor } from '../state/store';
 import { DIRECTORY, SUGGESTED_MESSAGE } from '../data/onboarding';
 
 export default function InviteScreen() {
-  const { state, patch, go } = useStore();
+  const { state, patch, go, addPerson } = useStore();
   const pq = (state.peopleQuery || '').trim().toLowerCase();
   const results = pq
     ? DIRECTORY.filter((p) => (p.name + ' ' + p.detail).toLowerCase().includes(pq))
@@ -26,8 +26,11 @@ export default function InviteScreen() {
     patch({ msgCopied: true });
     setTimeout(() => patch({ msgCopied: false }), 1800);
   };
-  const ask = (name: string) =>
-    patch({ askedPeople: state.askedPeople.includes(name) ? state.askedPeople : [...state.askedPeople, name] });
+  const ask = (p: { name: string; detail: string; tint: string }) => {
+    if (state.askedPeople.includes(p.name)) return;
+    patch({ askedPeople: [...state.askedPeople, p.name] });
+    addPerson(p.name, p.detail, p.tint); // persists to Supabase when configured
+  };
 
   return (
     <Screen contentStyle={styles.wrap}>
@@ -64,7 +67,7 @@ export default function InviteScreen() {
                   <Text style={styles.resultDetail}>{p.detail}</Text>
                 </View>
                 <Pressable
-                  onPress={() => ask(p.name)}
+                  onPress={() => ask(p)}
                   style={[styles.askBtn, asked && styles.askBtnOn]}
                 >
                   <Text style={styles.askText}>{asked ? 'Asked' : 'Ask'}</Text>

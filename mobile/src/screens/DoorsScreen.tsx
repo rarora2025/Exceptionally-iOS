@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { Screen, T, Button } from '../ui/kit';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
+import { updateProfile } from '../lib/db';
 import { DOORS_STEPS, ONBOARDING_GOALS } from '../data/onboarding';
 
 export default function DoorsScreen() {
@@ -40,7 +41,10 @@ export default function DoorsScreen() {
           return (
             <Pressable
               key={label}
-              onPress={() => patch({ goal: label })}
+              onPress={() => {
+                patch({ goal: label });
+                updateProfile({ onboarding_goal: label });
+              }}
               style={[styles.goal, on ? styles.goalOn : styles.goalOff]}
             >
               <Text style={styles.goalText}>{label}</Text>

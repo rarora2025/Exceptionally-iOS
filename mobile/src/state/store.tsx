@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import * as db from '../lib/db';
 
 // The prototype drives everything off a single mutable `state` object and a
 // `screen` string that acts as a state machine. We preserve that exact model.
@@ -32,6 +33,8 @@ export type Screen =
 export type Invite = { name: string; state: string };
 
 export type ArtifactStyle = { emoji?: string; color?: string };
+
+export type Person = { id?: string; name: string; detail: string; tint: string; status: string };
 
 export interface AppState {
   screen: Screen;
@@ -87,6 +90,10 @@ export interface AppState {
   cTurn: number;
   reviewAction: string;
   attribution: string;
+
+  // hydrated from Supabase
+  people: Person[];
+  hydrated: boolean;
 }
 
 export const initialState: AppState = {
@@ -135,13 +142,28 @@ export const initialState: AppState = {
   cTurn: 0,
   reviewAction: 'confirm',
   attribution: 'name',
+
+  people: [],
+  hydrated: false,
 };
+
+// Demo people seeded into a brand-new account so the invite/people views aren't
+// empty (represents people already invited). Real invites are added on top.
+const SEED_PEOPLE: { name: string; email: string; tint: string; status: string }[] = [
+  { name: 'David Okonkwo', email: 'd.okonkwo@email.com', tint: '#D6F24B', status: 'Answered' },
+  { name: 'Maya Fischer', email: 'maya.fischer@email.com', tint: '#E9F0FF', status: 'Answered' },
+  { name: 'Priya Raman', email: 'priya.raman@email.com', tint: '#FFE7D6', status: 'Joined' },
+  { name: 'Sam Whitfield', email: 'sam.whitfield@email.com', tint: '#E8DBFF', status: 'Invited' },
+];
 
 type Ctx = {
   state: AppState;
   patch: (p: Partial<AppState>) => void;
   set: <K extends keyof AppState>(key: K, value: AppState[K]) => void;
   go: (screen: Screen) => void;
+  hydrate: () => Promise<void>;
+  reset: () => void;
+  addPerson: (name: string, detail: string, tint: string) => Promise<void>;
 };
 
 const StoreContext = createContext<Ctx | null>(null);
@@ -156,7 +178,52 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
   const go = useCallback((screen: Screen) => setState((s) => ({ ...s, screen })), []);
 
-  const value = useMemo(() => ({ state, patch, set, go }), [state, patch, set, go]);
+  const reset = useCallback(() => setState(initialState), []);
+
+  const hydrate = useCallback(async () => {
+    // profile → career goal + onboarding goal + name
+    const profile = await db.getProfile();
+
+    // invites → people (seed demo set into a brand-new account)
+    let invites = await db.listInvites();
+    if (invites.length === 0) {
+      for (const p of SEED_PEOPLE) await db.addInvite(p);
+      invites = await db.listInvites();
+    }
+    const people: Person[] = invites.map((i) => ({
+      id: i.id,
+      name: i.name,
+      detail: i.email ?? '',
+      tint: i.tint ?? '#D6F24B',
+      status: i.status,
+    }));
+
+    // chat history
+    const chat = await db.listChat();
+
+    setState((s) => ({
+      ...s,
+      careerGoal: profile?.career_goal ?? s.careerGoal,
+      goal: profile?.onboarding_goal ?? s.goal,
+      suName: profile?.full_name ?? s.suName,
+      people,
+      chatLog: chat.map((c) => ({ role: c.role, text: c.text })),
+      hydrated: true,
+    }));
+  }, []);
+
+  const addPerson = useCallback(async (name: string, detail: string, tint: string) => {
+    const row = await db.addInvite({ name, email: detail, tint, status: 'Invited' });
+    setState((s) => ({
+      ...s,
+      people: [...s.people, { id: row?.id, name, detail, tint, status: 'Invited' }],
+    }));
+  }, []);
+
+  const value = useMemo(
+    () => ({ state, patch, set, go, hydrate, reset, addPerson }),
+    [state, patch, set, go, hydrate, reset, addPerson],
+  );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 };
 
