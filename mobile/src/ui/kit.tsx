@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow } from '../theme';
+import * as haptics from '../lib/haptics';
 
 /* ----------------------------- Text ----------------------------- */
 
@@ -149,7 +150,14 @@ export const Button: React.FC<{
 
   return (
     <Pressable
-      onPress={disabled ? undefined : onPress}
+      onPress={
+        disabled
+          ? undefined
+          : () => {
+              haptics.tap();
+              onPress?.();
+            }
+      }
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,

@@ -4,6 +4,7 @@ import { Screen, T, Button } from '../ui/kit';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { updateProfile } from '../lib/db';
+import * as haptics from '../lib/haptics';
 import { DOORS_STEPS, ONBOARDING_GOALS } from '../data/onboarding';
 
 export default function DoorsScreen() {
@@ -42,6 +43,7 @@ export default function DoorsScreen() {
             <Pressable
               key={label}
               onPress={() => {
+                haptics.select();
                 patch({ goal: label });
                 updateProfile({ onboarding_goal: label });
               }}

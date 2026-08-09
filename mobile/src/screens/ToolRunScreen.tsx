@@ -6,6 +6,7 @@ import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { addToolRun } from '../lib/db';
+import * as haptics from '../lib/haptics';
 import { TOOLS, TOOL_STEPS, tagBg } from '../data/content';
 
 export default function ToolRunScreen() {
@@ -25,6 +26,7 @@ export default function ToolRunScreen() {
     if (state.toolStep >= TOOL_STEPS.length - 1) {
       const done = setTimeout(() => {
         patch({ toolPhase: 'done' });
+        haptics.success();
         addToolRun({
           tool_key: tool.key,
           inputs: { paste: state.toolPaste, link: state.toolLink, role: state.toolRole, horizon: state.toolHorizon },

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, Screen } from '../state/store';
+import * as haptics from '../lib/haptics';
 
 const HOME_GROUP: Screen[] = ['home', 'chat', 'people', 'fascHub', 'fascBucket', 'fascSeed', 'fascInterview', 'fascResult'];
 const PROFILE_GROUP: Screen[] = ['profile', 'artifact'];
@@ -27,7 +28,14 @@ export default function TabBar() {
         {TABS.map((t) => {
           const on = t.group.includes(state.screen);
           return (
-            <Pressable key={t.key} onPress={() => go(t.key)} style={[styles.tab, on && styles.tabOn]}>
+            <Pressable
+              key={t.key}
+              onPress={() => {
+                if (!on) haptics.select();
+                go(t.key);
+              }}
+              style={[styles.tab, on && styles.tabOn]}
+            >
               <Ionicons name={(on ? t.icon : `${t.icon}-outline`) as any} size={22} color={on ? colors.accentInk : colors.muted} />
               {on ? <Text style={styles.label}>{t.label}</Text> : null}
             </Pressable>

@@ -6,6 +6,7 @@ import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { updateProfile } from '../lib/db';
+import * as haptics from '../lib/haptics';
 import { TOOL_GOALS, TOOLS } from '../data/content';
 
 const TOOL_ACCENTS = [colors.accent, colors.tintBlue, colors.tintPeach, colors.tintLilac, colors.tintAmber];
@@ -27,6 +28,7 @@ export default function ToolsScreen() {
             <Pressable
               key={g.key}
               onPress={() => {
+                haptics.select();
                 patch({ careerGoal: g.key });
                 updateProfile({ career_goal: g.key });
               }}

@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Screen, T, Button, Card, Avatar, BackLink } from '../ui/kit';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, initials, inviteLinkFor } from '../state/store';
+import * as haptics from '../lib/haptics';
 import { DIRECTORY, SUGGESTED_MESSAGE } from '../data/onboarding';
 
 export default function InviteScreen() {
@@ -18,16 +19,19 @@ export default function InviteScreen() {
 
   const copyLink = async () => {
     await Clipboard.setStringAsync(link);
+    haptics.success();
     patch({ copied: true });
     setTimeout(() => patch({ copied: false }), 1800);
   };
   const copyMsg = async () => {
     await Clipboard.setStringAsync(SUGGESTED_MESSAGE.join('\n\n'));
+    haptics.success();
     patch({ msgCopied: true });
     setTimeout(() => patch({ msgCopied: false }), 1800);
   };
   const ask = (p: { name: string; detail: string; tint: string }) => {
     if (state.askedPeople.includes(p.name)) return;
+    haptics.select();
     patch({ askedPeople: [...state.askedPeople, p.name] });
     addPerson(p.name, p.detail, p.tint); // persists to Supabase when configured
   };
