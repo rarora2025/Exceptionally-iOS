@@ -5,10 +5,12 @@ import { Screen, T, Avatar } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
+import { useAuth } from '../state/auth';
 import { SUPER_STRENGTHS, SELF_ARTIFACTS, EMOJI_OPTIONS, COLOR_OPTIONS } from '../data/content';
 
 export default function ProfileScreen() {
   const { state, patch, go } = useStore();
+  const { configured, signOut } = useAuth();
 
   const openArtifact = (key: string) => patch({ screen: 'artifact', artifactKey: key });
 
@@ -115,12 +117,27 @@ export default function ProfileScreen() {
           );
         })}
       </View>
+
+      {configured ? (
+        <Pressable
+          onPress={async () => {
+            await signOut();
+            go('auth');
+          }}
+          style={styles.signOut}
+          hitSlop={8}
+        >
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { paddingTop: 16, paddingBottom: TAB_BAR_SPACE },
+  signOut: { alignItems: 'center', paddingVertical: 18, marginTop: 8 },
+  signOutText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
   head: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   count: { fontFamily: font.semi, fontSize: 13.5, color: colors.muted, marginTop: 5 },
   inviteBtn: {

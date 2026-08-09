@@ -1,15 +1,30 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
 import { Screen, T, Button, Field, BackLink } from '../ui/kit';
 import { colors, font } from '../theme';
 import { useStore, suReady } from '../state/store';
+import { useAuth } from '../state/auth';
 
 export default function SignupScreen() {
   const { state, patch, go } = useStore();
-  const ready = suReady(state);
+  const { configured, signUp } = useAuth();
+  const [busy, setBusy] = React.useState(false);
+  const ready = suReady(state) && !busy;
 
-  const submit = () => {
-    if (ready) go('doors');
+  const submit = async () => {
+    if (!suReady(state) || busy) return;
+    if (!configured) {
+      go('doors'); // mock mode until Supabase is configured
+      return;
+    }
+    setBusy(true);
+    const { error } = await signUp(state.suEmail, state.suPw, state.suName);
+    setBusy(false);
+    if (error) {
+      Alert.alert('Could not create account', error);
+      return;
+    }
+    go('doors');
   };
 
   return (
@@ -46,7 +61,7 @@ export default function SignupScreen() {
 
       <View style={{ flex: 1, minHeight: 24 }} />
 
-      <Button title="Create account" onPress={submit} disabled={!ready} />
+      <Button title={busy ? 'Creating account…' : 'Create account'} onPress={submit} disabled={!ready} />
       <T variant="meta" style={styles.terms}>
         By continuing you agree to our Terms and Privacy Policy.
       </T>

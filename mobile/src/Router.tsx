@@ -1,6 +1,7 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { useStore, Screen } from './state/store';
+import { useAuth } from './state/auth';
 import { colors } from './theme';
 import TabBar from './ui/TabBar';
 
@@ -29,6 +30,13 @@ const TABBED: Screen[] = [
   'home', 'profile', 'tools', 'people', 'artifact',
   'fascHub', 'fascBucket', 'fascSeed', 'fascInterview', 'fascResult', 'toolRun',
   'transcript', 'synthesis',
+];
+
+// Screens reachable without a session (auth + onboarding continues right after
+// signup while the session settles, and the external creation flow is public).
+const PUBLIC_SCREENS: Screen[] = [
+  'auth', 'login', 'signup', 'doors', 'invite',
+  'cLand', 'cIntro', 'cInterview', 'cReview', 'cDone',
 ];
 
 function ScreenFor({ screen }: { screen: Screen }) {
@@ -62,7 +70,27 @@ function ScreenFor({ screen }: { screen: Screen }) {
 }
 
 export default function Router() {
-  const { state } = useStore();
+  const { state, go } = useStore();
+  const { configured, loading, session } = useAuth();
+
+  // Session gate (only when Supabase is configured; otherwise mock mode).
+  React.useEffect(() => {
+    if (!configured || loading) return;
+    if (session && (state.screen === 'auth' || state.screen === 'login')) {
+      go('home');
+    } else if (!session && !PUBLIC_SCREENS.includes(state.screen)) {
+      go('auth');
+    }
+  }, [configured, loading, session, state.screen, go]);
+
+  if (configured && loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.ink} />
+      </View>
+    );
+  }
+
   const showTabs = TABBED.includes(state.screen);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

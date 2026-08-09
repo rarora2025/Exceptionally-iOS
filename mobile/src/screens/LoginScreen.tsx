@@ -1,15 +1,30 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
 import { Screen, T, Button, Field, BackLink } from '../ui/kit';
 import { colors, font } from '../theme';
 import { useStore, liReady } from '../state/store';
+import { useAuth } from '../state/auth';
 
 export default function LoginScreen() {
   const { state, patch, go } = useStore();
-  const ready = liReady(state);
+  const { configured, signIn } = useAuth();
+  const [busy, setBusy] = React.useState(false);
+  const ready = liReady(state) && !busy;
 
-  const submit = () => {
-    if (ready) go('home');
+  const submit = async () => {
+    if (!liReady(state) || busy) return;
+    if (!configured) {
+      go('home'); // mock mode
+      return;
+    }
+    setBusy(true);
+    const { error } = await signIn(state.liEmail, state.liPw);
+    setBusy(false);
+    if (error) {
+      Alert.alert('Could not log in', error);
+      return;
+    }
+    // session listener + Router gate will route to home
   };
 
   return (
@@ -42,7 +57,7 @@ export default function LoginScreen() {
 
       <View style={{ flex: 1, minHeight: 24 }} />
 
-      <Button title="Log in" onPress={submit} disabled={!ready} />
+      <Button title={busy ? 'Logging in…' : 'Log in'} onPress={submit} disabled={!ready} />
       <Pressable onPress={() => go('signup')} style={styles.textBtn} hitSlop={8}>
         <Text style={styles.textBtnLabel}>Create an account</Text>
       </Pressable>

@@ -15,6 +15,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { StoreProvider } from './src/state/store';
+import { AuthProvider } from './src/state/auth';
 import Router from './src/Router';
 import { colors } from './src/theme';
 
@@ -33,9 +34,11 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="dark" />
       {loaded ? (
-        <StoreProvider>
-          <Router />
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <Router />
+          </StoreProvider>
+        </AuthProvider>
       ) : (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.ink} />
