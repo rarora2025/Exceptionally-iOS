@@ -21,7 +21,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "ios": "expo start --ios",
+    "ios": "bash scripts/ios.sh",
+    "ios:expo": "expo start --ios",
     "web": "expo start --web"
   },
   "private": true
