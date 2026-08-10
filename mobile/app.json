@@ -10,7 +10,10 @@
     "backgroundColor": "#F4F5F8",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.exceptionally.ios"
+      "bundleIdentifier": "app.exceptionally.ios",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
