@@ -464,6 +464,7 @@ export const CREATION_QUESTIONS = [
   { q: 'What changes after he does that?', canned: 'The argument usually collapses. People realise they were solving different problems. We agree on one small thing to test instead of debating the whole plan.' },
   { q: "What's a recent example?", canned: 'The launch review in May. Three teams were solving different versions of the same problem. Noah mapped the assumptions on a whiteboard, pointed out we had never decided who owned pricing, and we left with a first test.' },
   { q: 'What might another capable person have done instead?', canned: 'Most people would have run the meeting to the agenda and taken actions. Noah stops and finds the decision nobody made. I have seen him do it in planning too, not just in a crisis.' },
+  { q: 'Putting it together, is there a combination of qualities that stands out more together than any one of them alone?', canned: "Yes. It's the clarity combined with how calm he stays. Plenty of people can spot the real problem, but they create friction pointing it out. He does it in a way that makes the room relax, so people actually change their minds." },
 ];
 
 export { tint };

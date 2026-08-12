@@ -53,22 +53,29 @@ export function CLandScreen() {
 export function CIntroScreen() {
   const { go } = useStore();
   return (
-    <Screen scroll={false} contentStyle={styles.wrap}>
+    <Screen scroll contentStyle={styles.wrap}>
       <T variant="title" style={{ marginTop: 12 }}>
         Before you begin.
       </T>
       <T variant="body" style={{ marginTop: 18 }}>
-        We're interested in what you have personally seen that feels genuinely exceptional about him. How he sees
+        We're interested in what you've personally seen that feels genuinely exceptional about him. How he sees
         things, approaches problems, makes things happen, or affects the people around him.
       </T>
-      <T variant="body" style={{ marginTop: 12 }}>
-        You do not need one perfect "superpower." Often what makes someone special is a combination of qualities.
-      </T>
-      <T variant="body" style={{ marginTop: 12 }}>
+
+      <View style={styles.comboCard}>
+        <Text style={styles.comboLabel}>Look for the combination</Text>
+        <Text style={styles.comboBody}>
+          It's rarely one single trait. What makes someone exceptional is usually the mix. Think the athlete who's
+          also brilliant at calculus, or the engineer everyone actually wants in the room. What combination makes
+          Noah hard to replace?
+        </Text>
+      </View>
+
+      <T variant="body" style={{ marginTop: 16 }}>
         We'll ask a few follow-ups to understand the moments behind what you share. Specific examples help, but
         begin wherever feels easiest.
       </T>
-      <View style={{ flex: 1 }} />
+      <View style={{ flex: 1, minHeight: 16 }} />
       <Button title="Start" variant="dark" onPress={() => go('cInterview')} />
     </Screen>
   );
@@ -252,6 +259,10 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 26, paddingVertical: 16, borderTopWidth: 1.5, borderTopColor: colors.line, marginBottom: 12 },
   statNum: { fontFamily: font.display, fontSize: 18, color: colors.ink, letterSpacing: -0.4 },
   statLabel: { fontFamily: font.semi, fontSize: 12.5, color: colors.muted, marginTop: 2 },
+
+  comboCard: { marginTop: 20, padding: 18, borderRadius: radius.lg, backgroundColor: colors.tintLime, borderWidth: 1.5, borderColor: colors.accentDeep },
+  comboLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
+  comboBody: { fontFamily: font.medium, fontSize: 15.5, lineHeight: 23, color: '#23231F', marginTop: 9 },
 
   dots: { flexDirection: 'row', gap: 6, marginTop: 8 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.surfaceSunken },
