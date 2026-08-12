@@ -1,26 +1,120 @@
 import React from 'react';
-import { View, StyleSheet, Text, Pressable } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { addFascInterview } from '../lib/db';
-import { FASC_QUESTIONS } from '../data/content';
+import {
+  nextQuestion,
+  extractSignal,
+  synthesizeArtifact,
+  answerQuality,
+  Turn,
+  Question,
+  Artifact,
+} from '../lib/interview';
 
-const RESULT_TEXT =
-  'You keep circling who gets to make the call. Not the technology, the accountability: when people hand a decision to an agent versus when they refuse to, and who ends up answering for it.';
+const MIN_Q = 6;
+const MAX_Q = 9;
 
-// Combines the seeded interview and its result. While fTurn is within range we
-// show the current question and a canned answer; after the last turn, the result.
+type Phase = 'loading' | 'asking' | 'synthesizing' | 'result' | 'error';
+
 export default function FascInterviewScreen() {
   const { state, patch, go } = useStore();
-  const total = FASC_QUESTIONS.length;
-  const [answered, setAnswered] = React.useState(false);
+  const interest = state.fascSeed;
+  const firstName = 'Noah'; // TODO: pull from the signed-in profile
 
-  const done = state.fTurn >= total;
+  const [turns, setTurns] = React.useState<Turn[]>([]);
+  const [current, setCurrent] = React.useState<Question | null>(null);
+  const [draft, setDraft] = React.useState('');
+  const [phase, setPhase] = React.useState<Phase>('loading');
+  const [artifact, setArtifact] = React.useState<Artifact | null>(null);
+  const [errorMsg, setErrorMsg] = React.useState('');
+  const pending = React.useRef<'question' | 'finish'>('question');
 
-  if (done) {
+  const loadFirst = React.useCallback(async () => {
+    pending.current = 'question';
+    setPhase('loading');
+    try {
+      const q = await nextQuestion(interest, []);
+      setCurrent(q);
+      setPhase('asking');
+    } catch {
+      setErrorMsg('Could not reach the interviewer. Check your connection and try again.');
+      setPhase('error');
+    }
+  }, [interest]);
+
+  React.useEffect(() => {
+    loadFirst();
+  }, [loadFirst]);
+
+  const finish = React.useCallback(
+    async (allTurns: Turn[]) => {
+      pending.current = 'finish';
+      setPhase('synthesizing');
+      try {
+        const signal = await extractSignal(firstName, interest, allTurns);
+        const art = await synthesizeArtifact(firstName, interest, signal);
+        setArtifact(art);
+        setPhase('result');
+      } catch {
+        setErrorMsg('Could not shape your artifact. Your answers are safe, tap to try again.');
+        setPhase('error');
+      }
+    },
+    [firstName, interest],
+  );
+
+  const advance = React.useCallback(
+    async (allTurns: Turn[]) => {
+      pending.current = 'question';
+      setCurrent(null);
+      setPhase('loading');
+      try {
+        const q = await nextQuestion(interest, allTurns);
+        setCurrent(q);
+        setPhase('asking');
+      } catch {
+        setErrorMsg('Could not load the next question. Tap to try again.');
+        setPhase('error');
+      }
+    },
+    [interest],
+  );
+
+  const submit = () => {
+    const a = draft.trim();
+    if (!a || !current) return;
+    const turn: Turn = { question: current.questionText, answer: a, quality: answerQuality(a) };
+    const allTurns = [...turns, turn];
+    setTurns(allTurns);
+    setDraft('');
+    if (current.wrapUp || allTurns.length >= MAX_Q) finish(allTurns);
+    else advance(allTurns);
+  };
+
+  const retry = () => {
+    if (pending.current === 'finish') finish(turns);
+    else if (turns.length === 0) loadFirst();
+    else advance(turns);
+  };
+
+  const save = () => {
+    if (!artifact) return;
+    addFascInterview({
+      bucket: state.fascBucket,
+      seed: interest,
+      transcript: turns.map((t) => ({ q: t.question, a: t.answer })),
+      result: artifact.one_liner,
+    });
+    patch({ screen: 'profile', fTurn: 0, fascSeed: '' });
+  };
+
+  /* ---------------- result ---------------- */
+  if (phase === 'result' && artifact) {
     return (
       <Screen contentStyle={styles.wrap}>
         <BackLink label="Fascinations" onPress={() => go('fascHub')} />
@@ -28,128 +122,189 @@ export default function FascInterviewScreen() {
           <Text style={styles.resultBadgeText}>New fascination artifact</Text>
         </View>
         <T variant="title" style={styles.h1}>
-          {state.fascSeed}
+          {artifact.title}
         </T>
         <T variant="body" style={styles.resultBody}>
-          You keep circling who gets to make the call. Not the technology, the accountability: when people hand a
-          decision to an agent versus when they refuse to, and who ends up answering for it.
+          {artifact.one_liner}
         </T>
 
-        <View style={styles.quoteCard}>
-          <Text style={styles.quoteMark}>"</Text>
-          <Text style={styles.quoteText}>
-            Accuracy cannot be what is doing the work. People refuse things the model is measurably better at.
-          </Text>
-        </View>
+        {artifact.deeper_mechanism ? (
+          <View style={styles.pullsCard}>
+            <Text style={styles.pullsLabel}>Why it pulls you</Text>
+            <Text style={styles.pullsBody}>{artifact.deeper_mechanism}</Text>
+          </View>
+        ) : null}
 
-        <Button
-          title="Save to profile"
-          onPress={() => {
-            addFascInterview({
-              bucket: state.fascBucket,
-              seed: state.fascSeed,
-              transcript: FASC_QUESTIONS.map((q) => ({ q: q.q, a: q.canned })),
-              result: RESULT_TEXT,
-            });
-            patch({ screen: 'profile', fTurn: 0 });
-          }}
-          style={{ marginTop: 22 }}
-        />
+        {artifact.evidence?.length ? (
+          <>
+            <Text style={styles.evLabel}>What you said</Text>
+            <View style={{ gap: 9, marginTop: 10 }}>
+              {artifact.evidence.map((e, i) => (
+                <Text key={i} style={styles.evItem}>
+                  {e}
+                </Text>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <Button title="Save to profile" onPress={save} style={{ marginTop: 24 }} />
         <Button
           title="Talk this through"
           variant="secondary"
           style={{ marginTop: 10 }}
-          onPress={() => patch({ screen: 'chat', chatDraft: `Help me make sense of my thinking on ${state.fascSeed}.` })}
+          onPress={() => patch({ screen: 'chat', chatDraft: `Help me make sense of my thinking on ${interest}.` })}
         />
       </Screen>
     );
   }
 
-  const q = FASC_QUESTIONS[state.fTurn];
+  /* ---------------- synthesizing ---------------- */
+  if (phase === 'synthesizing') {
+    return (
+      <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
+        <ActivityIndicator color={colors.ink} />
+        <T variant="heading" style={{ marginTop: 18, textAlign: 'center' }}>
+          Finding what pulls you.
+        </T>
+        <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
+          Reading back through everything you said.
+        </T>
+      </Screen>
+    );
+  }
 
-  const next = () => {
-    setAnswered(false);
-    patch({ fTurn: state.fTurn + 1 });
-  };
+  /* ---------------- error ---------------- */
+  if (phase === 'error') {
+    return (
+      <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
+        <Ionicons name="cloud-offline-outline" size={30} color={colors.muted} />
+        <T variant="body" style={{ marginTop: 14, textAlign: 'center', maxWidth: '88%' }}>
+          {errorMsg}
+        </T>
+        <Button title="Try again" onPress={retry} style={{ marginTop: 22, minWidth: 180 }} />
+        <Pressable onPress={() => go('fascHub')} style={{ paddingVertical: 14 }} hitSlop={8}>
+          <Text style={styles.leaveText}>Leave</Text>
+        </Pressable>
+      </Screen>
+    );
+  }
+
+  /* ---------------- interviewing (asking / loading) ---------------- */
+  const answeredCount = turns.length;
+  const progress = Math.min(answeredCount / MIN_Q, 1);
 
   return (
     <Screen scroll contentStyle={styles.wrap}>
       <BackLink label="Fascinations" onPress={() => go('fascHub')} />
 
-      <View style={styles.progressRow}>
-        {Array.from({ length: total }).map((_, i) => (
-          <View key={i} style={[styles.pip, i <= state.fTurn && styles.pipOn]} />
-        ))}
+      <View style={styles.track}>
+        <View style={[styles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
       </View>
       <Text style={styles.turnLabel}>
-        Question {state.fTurn + 1} of {total} · about {state.fascSeed}
+        Question {answeredCount + 1} · about {interest}
       </Text>
 
-      <View style={styles.qBubble}>
-        <View style={styles.dot} />
-        <Text style={styles.qText}>{q.q}</Text>
-      </View>
-
-      {answered ? (
-        <View style={styles.aBubble}>
-          <Text style={styles.aText}>{q.canned}</Text>
+      {phase === 'loading' || !current ? (
+        <View style={styles.qBubble}>
+          <View style={styles.dot} />
+          <ThinkingDots />
         </View>
-      ) : null}
-
-      <View style={{ flex: 1, minHeight: 20 }} />
-
-      {answered ? (
-        <Button title={state.fTurn + 1 === total ? 'See what emerged' : 'Next question'} variant="dark" onPress={next} />
       ) : (
-        <Pressable style={styles.answerBtn} onPress={() => setAnswered(true)}>
-          <Ionicons name="mic" size={18} color={colors.accentInk} />
-          <Text style={styles.answerText}>Answer with an example</Text>
-        </Pressable>
+        <View style={styles.qBubble}>
+          <View style={styles.dot} />
+          <Text style={styles.qText}>{current.questionText}</Text>
+        </View>
       )}
+
+      <View style={{ flex: 1, minHeight: 16 }} />
+
+      <TextInput
+        value={draft}
+        onChangeText={setDraft}
+        placeholder="Answer in a sentence or two…"
+        placeholderTextColor={colors.muted}
+        multiline
+        editable={phase === 'asking'}
+        style={styles.answerInput}
+      />
+      <Button
+        title={current?.wrapUp ? 'See what emerged' : 'Continue'}
+        variant="dark"
+        disabled={phase !== 'asking' || !draft.trim()}
+        onPress={submit}
+        style={{ marginTop: 12 }}
+      />
     </Screen>
+  );
+}
+
+// Three pulsing dots shown while the next question is being written.
+function ThinkingDots() {
+  const d0 = React.useRef(new Animated.Value(0.3)).current;
+  const d1 = React.useRef(new Animated.Value(0.3)).current;
+  const d2 = React.useRef(new Animated.Value(0.3)).current;
+  React.useEffect(() => {
+    const dots = [d0, d1, d2];
+    const loops = dots.map((d, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 160),
+          Animated.timing(d, { toValue: 1, duration: 340, useNativeDriver: true }),
+          Animated.timing(d, { toValue: 0.3, duration: 340, useNativeDriver: true }),
+        ]),
+      ),
+    );
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, [d0, d1, d2]);
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', height: 28 }}>
+      {[d0, d1, d2].map((d, i) => (
+        <Animated.View key={i} style={[styles.tdot, { opacity: d, transform: [{ scale: d }] }]} />
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
+  center: { alignItems: 'center', justifyContent: 'center' },
 
-  progressRow: { flexDirection: 'row', gap: 6, marginTop: 18 },
-  pip: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.surfaceSunken },
-  pipOn: { backgroundColor: colors.accent },
+  track: { marginTop: 18, height: 6, borderRadius: 3, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
+  trackFill: { height: '100%', borderRadius: 3, backgroundColor: colors.accent },
   turnLabel: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 12 },
 
   qBubble: { flexDirection: 'row', gap: 12, marginTop: 20, alignItems: 'flex-start' },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent, marginTop: 8 },
+  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent, marginTop: 9 },
   qText: { flex: 1, fontFamily: font.displaySemi, fontSize: 22, lineHeight: 28, letterSpacing: -0.5, color: colors.ink },
+  tdot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted },
 
-  aBubble: {
-    alignSelf: 'flex-end',
-    marginTop: 18,
-    maxWidth: '90%',
-    backgroundColor: colors.ink,
-    borderRadius: 20,
-    borderBottomRightRadius: 6,
+  answerInput: {
+    minHeight: 96,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.lineStrong,
     padding: 15,
+    fontFamily: font.medium,
+    fontSize: 15.5,
+    lineHeight: 22,
+    color: colors.ink,
+    textAlignVertical: 'top',
   },
-  aText: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.onDark },
 
-  answerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.accent,
-    borderRadius: radius.pill,
-    height: 56,
-    ...shadow.accent,
-  },
-  answerText: { fontFamily: font.bold, fontSize: 16, color: colors.accentInk },
+  leaveText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 
-  h1: { marginTop: 16, fontSize: 30, textTransform: 'capitalize' },
+  h1: { marginTop: 16, fontSize: 28 },
   resultBadge: { alignSelf: 'flex-start', marginTop: 8, backgroundColor: colors.accent, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   resultBadgeText: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.accentInk },
   resultBody: { marginTop: 14, fontSize: 16.5, lineHeight: 24, color: colors.inkSoft },
-  quoteCard: { marginTop: 20, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 20, ...shadow.card },
-  quoteMark: { fontFamily: font.display, fontSize: 44, color: colors.accent, height: 30, lineHeight: 44 },
-  quoteText: { fontFamily: font.semi, fontSize: 16.5, lineHeight: 24, color: colors.ink, marginTop: 6 },
+
+  pullsCard: { marginTop: 20, padding: 18, borderRadius: radius.lg, backgroundColor: colors.tintLime, borderWidth: 1.5, borderColor: colors.accentDeep },
+  pullsLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
+  pullsBody: { fontFamily: font.medium, fontSize: 15.5, lineHeight: 23, color: '#23231F', marginTop: 9 },
+
+  evLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.muted, marginTop: 24 },
+  evItem: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft, paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.lineStrong },
 });

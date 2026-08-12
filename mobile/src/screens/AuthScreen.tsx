@@ -39,8 +39,8 @@ export default function AuthScreen() {
         <T variant="display">Discover what makes you exceptional.</T>
         <View style={styles.rule} />
         <T variant="body" style={styles.sub}>
-          You can see part of what makes you exceptional. The people who know you see the rest. A few short
-          interviews with both, and you'll know the work you're actually built for.
+          You're too close to see what you're best at. The people around you have known for years. This is where
+          you finally find out.
         </T>
       </View>
 
