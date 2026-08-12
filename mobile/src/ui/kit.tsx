@@ -11,8 +11,10 @@ import {
   ScrollView,
   ScrollViewProps,
   Platform,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, font, radius, shadow } from '../theme';
 import * as haptics from '../lib/haptics';
 
@@ -253,6 +255,46 @@ export const Wordmark: React.FC<{ size?: number }> = ({ size = 17 }) => (
   <Text style={[styles.wordmark, { fontSize: size }]}>Exceptionally</Text>
 );
 
+/* ----------------------------- ErrorBanner ----------------------------- */
+
+// Inline, dismissible error in the app's design language — replaces the
+// jarring native Alert dialog. Renders nothing when there's no message and
+// fades in when one appears.
+export const ErrorBanner: React.FC<{
+  message?: string | null;
+  onDismiss?: () => void;
+  style?: ViewProps['style'];
+}> = ({ message, onDismiss, style }) => {
+  const anim = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (!message) return;
+    anim.setValue(0);
+    Animated.timing(anim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [message, anim]);
+
+  if (!message) return null;
+  return (
+    <Animated.View
+      style={[
+        styles.errBanner,
+        {
+          opacity: anim,
+          transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }],
+        },
+        style,
+      ]}
+    >
+      <Ionicons name="alert-circle" size={19} color={colors.danger} />
+      <Text style={styles.errText}>{message}</Text>
+      {onDismiss ? (
+        <Pressable onPress={onDismiss} hitSlop={10} style={styles.errClose}>
+          <Ionicons name="close" size={16} color={colors.dangerInk} />
+        </Pressable>
+      ) : null}
+    </Animated.View>
+  );
+};
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   screenInner: { paddingHorizontal: 24 },
@@ -297,4 +339,18 @@ const styles = StyleSheet.create({
   avatarText: { fontFamily: font.displaySemi, fontSize: 14, color: colors.ink },
 
   wordmark: { fontFamily: font.display, color: colors.ink, letterSpacing: -0.6 },
+
+  errBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    borderRadius: radius.md,
+    backgroundColor: colors.dangerBg,
+    borderWidth: 1.5,
+    borderColor: colors.dangerLine,
+  },
+  errText: { flex: 1, fontFamily: font.semi, fontSize: 14, lineHeight: 19, color: colors.dangerInk },
+  errClose: { padding: 2 },
 });

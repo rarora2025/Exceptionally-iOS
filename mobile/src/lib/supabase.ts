@@ -36,3 +36,24 @@ AppState.addEventListener('change', (state) => {
   if (state === 'active') supabase.auth.startAutoRefresh();
   else supabase.auth.stopAutoRefresh();
 });
+
+// Remove the persisted session directly from storage. supabase.auth.signOut()
+// makes a network call and can throw before it clears storage (e.g. offline),
+// which would otherwise auto-restore the session on next launch. This uses the
+// exact storage key the client was configured with, so it stays correct if the
+// project or key format changes.
+export async function clearStoredSession(): Promise<void> {
+  try {
+    const key = (supabase.auth as unknown as { storageKey?: string }).storageKey;
+    const explicit = key ? [key, `${key}-code-verifier`] : [];
+    // Fallback sweep: remove any Supabase auth-token keys (`sb-<ref>-auth-token`)
+    // in case the client's storageKey isn't reachable — guarantees an offline
+    // sign-out won't be restored on the next launch.
+    const all = await AsyncStorage.getAllKeys();
+    const swept = all.filter((k) => k.startsWith('sb-') && k.includes('-auth-token'));
+    const toRemove = Array.from(new Set([...explicit, ...swept]));
+    if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
+  } catch {
+    // best effort — the in-memory session is already cleared by the caller
+  }
+}

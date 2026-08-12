@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, clearStoredSession } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -80,7 +80,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    // Drive logout ourselves so it's instant and can't be blocked by the
+    // network. supabase.auth.signOut() makes a request to revoke the token even
+    // for scope:'local', and on a flaky/offline connection it can hang on an
+    // internal auth lock or throw — either way it may never clear the stored
+    // session, leaving the user auto-logged-in on the next launch. So:
+    //   1. Clear the in-memory session → the Router routes to auth immediately.
+    //   2. Wipe the persisted session directly and unconditionally.
+    //   3. Fire the server-side revoke best-effort, never awaiting it (local
+    //      scope keeps the user's other devices signed in).
+    setSession(null);
+    await clearStoredSession();
+    supabase.auth.signOut({ scope: 'local' }).catch(() => {});
   }, []);
 
   const value = useMemo<AuthCtx>(

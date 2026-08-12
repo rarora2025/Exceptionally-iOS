@@ -34,6 +34,12 @@ export const colors = {
   // link / info blue (kept for text links)
   link: '#3B62E8',
 
+  // error / danger — soft rose that sits in the paper aesthetic
+  danger: '#E5484D',
+  dangerBg: '#FDECEC',
+  dangerInk: '#8E2C2F',
+  dangerLine: '#F6D5D5',
+
   // soft tints for artifact / people / tool cards
   tintBlue: '#E9F0FF',
   tintViolet: '#EFEAFB',

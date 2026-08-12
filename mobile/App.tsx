@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
@@ -18,6 +18,12 @@ import { StoreProvider } from './src/state/store';
 import { AuthProvider } from './src/state/auth';
 import Router from './src/Router';
 import { colors } from './src/theme';
+
+// Supabase's background token-refresh logs a raw "Network request failed" to the
+// dev console when connectivity is flaky (very common in the iOS Simulator).
+// Real connectivity problems are surfaced in-app via ErrorBanner and an
+// offline-safe sign-out, so silence just this benign dev-only LogBox overlay.
+if (__DEV__) LogBox.ignoreLogs(['Network request failed']);
 
 export default function App() {
   const [loaded] = useFonts({

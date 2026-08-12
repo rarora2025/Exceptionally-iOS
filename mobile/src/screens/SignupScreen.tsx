@@ -1,18 +1,21 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
-import { Screen, T, Button, Field, BackLink } from '../ui/kit';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { Screen, T, Button, Field, BackLink, ErrorBanner } from '../ui/kit';
 import { colors, font } from '../theme';
 import { useStore, suReady } from '../state/store';
 import { useAuth } from '../state/auth';
+import { humanizeAuthError } from '../lib/errors';
 
 export default function SignupScreen() {
   const { state, patch, go } = useStore();
   const { configured, signUp } = useAuth();
   const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
   const ready = suReady(state) && !busy;
 
   const submit = async () => {
     if (!suReady(state) || busy) return;
+    setErr(null);
     if (!configured) {
       go('doors'); // mock mode until Supabase is configured
       return;
@@ -21,7 +24,7 @@ export default function SignupScreen() {
     const { error } = await signUp(state.suEmail, state.suPw, state.suName);
     setBusy(false);
     if (error) {
-      Alert.alert('Could not create account', error);
+      setErr(humanizeAuthError(error));
       return;
     }
     go('doors');
@@ -46,7 +49,10 @@ export default function SignupScreen() {
           label="Email"
           placeholder="you@email.com"
           value={state.suEmail}
-          onChangeText={(t) => patch({ suEmail: t })}
+          onChangeText={(t) => {
+            patch({ suEmail: t });
+            if (err) setErr(null);
+          }}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -54,10 +60,15 @@ export default function SignupScreen() {
           label="Password"
           placeholder="At least 8 characters"
           value={state.suPw}
-          onChangeText={(t) => patch({ suPw: t })}
+          onChangeText={(t) => {
+            patch({ suPw: t });
+            if (err) setErr(null);
+          }}
           secureTextEntry
         />
       </View>
+
+      <ErrorBanner message={err} onDismiss={() => setErr(null)} style={{ marginTop: 18 }} />
 
       <View style={{ flex: 1, minHeight: 24 }} />
 

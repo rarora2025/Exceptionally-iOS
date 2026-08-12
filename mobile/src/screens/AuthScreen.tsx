@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
-import { Screen, T, Button, Wordmark } from '../ui/kit';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { Screen, T, Button, Wordmark, ErrorBanner } from '../ui/kit';
 import { colors, font } from '../theme';
 import { useStore } from '../state/store';
 import { useAuth } from '../state/auth';
+import { humanizeAuthError } from '../lib/errors';
 
 const GoogleBadge = () => (
   <View style={styles.gBadge}>
@@ -15,8 +16,10 @@ export default function AuthScreen() {
   const { go } = useStore();
   const { configured, signInWithGoogle } = useAuth();
   const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
 
   const google = async () => {
+    setErr(null);
     if (!configured) {
       go('doors'); // mock mode
       return;
@@ -24,7 +27,7 @@ export default function AuthScreen() {
     setBusy(true);
     const { error } = await signInWithGoogle();
     setBusy(false);
-    if (error) Alert.alert('Google sign-in failed', error);
+    if (error) setErr(humanizeAuthError(error));
     // on success, the session gate routes to home
   };
 
@@ -44,6 +47,7 @@ export default function AuthScreen() {
       <View style={{ flex: 1 }} />
 
       <View style={{ gap: 10 }}>
+        <ErrorBanner message={err} onDismiss={() => setErr(null)} />
         <Button title={busy ? 'Connecting…' : 'Sign up with Google'} variant="dark" left={<GoogleBadge />} onPress={google} />
         <Button title="Sign up with email" variant="secondary" onPress={() => go('signup')} />
         <Pressable onPress={() => go('login')} style={styles.textBtn} hitSlop={8}>

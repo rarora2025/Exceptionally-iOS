@@ -1,18 +1,21 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
-import { Screen, T, Button, Field, BackLink } from '../ui/kit';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { Screen, T, Button, Field, BackLink, ErrorBanner } from '../ui/kit';
 import { colors, font } from '../theme';
 import { useStore, liReady } from '../state/store';
 import { useAuth } from '../state/auth';
+import { humanizeAuthError } from '../lib/errors';
 
 export default function LoginScreen() {
   const { state, patch, go } = useStore();
   const { configured, signIn } = useAuth();
   const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
   const ready = liReady(state) && !busy;
 
   const submit = async () => {
     if (!liReady(state) || busy) return;
+    setErr(null);
     if (!configured) {
       go('home'); // mock mode
       return;
@@ -21,7 +24,7 @@ export default function LoginScreen() {
     const { error } = await signIn(state.liEmail, state.liPw);
     setBusy(false);
     if (error) {
-      Alert.alert('Could not log in', error);
+      setErr(humanizeAuthError(error));
       return;
     }
     // session listener + Router gate will route to home
@@ -39,7 +42,10 @@ export default function LoginScreen() {
           label="Email"
           placeholder="you@email.com"
           value={state.liEmail}
-          onChangeText={(t) => patch({ liEmail: t })}
+          onChangeText={(t) => {
+            patch({ liEmail: t });
+            if (err) setErr(null);
+          }}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -47,13 +53,18 @@ export default function LoginScreen() {
           label="Password"
           placeholder="••••••••"
           value={state.liPw}
-          onChangeText={(t) => patch({ liPw: t })}
+          onChangeText={(t) => {
+            patch({ liPw: t });
+            if (err) setErr(null);
+          }}
           secureTextEntry
         />
         <Pressable hitSlop={8} style={styles.forgot}>
           <Text style={styles.forgotText}>Forgot password?</Text>
         </Pressable>
       </View>
+
+      <ErrorBanner message={err} onDismiss={() => setErr(null)} style={{ marginTop: 18 }} />
 
       <View style={{ flex: 1, minHeight: 24 }} />
 
