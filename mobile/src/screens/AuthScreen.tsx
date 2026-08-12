@@ -39,8 +39,8 @@ export default function AuthScreen() {
         <T variant="display">Discover what makes you exceptional.</T>
         <View style={styles.rule} />
         <T variant="body" style={styles.sub}>
-          The people who know you best can see what you can't. We turn their perspective, and yours, into a
-          clear picture of where your career should go.
+          Interview yourself about what pulls you in. Invite a few people to say what you're great at. We turn
+          both into a clear read on where your career fits.
         </T>
       </View>
 

@@ -11,6 +11,7 @@ export default function HomeScreen() {
   const { state, patch, go } = useStore();
   const hasDraft = !!state.problemDraft.trim();
   const pct = Math.round((PROGRESS_CHECKLIST.filter((p) => p.done).length / PROGRESS_CHECKLIST.length) * 100);
+  const nextIdx = PROGRESS_CHECKLIST.findIndex((p) => !p.done && p.route);
 
   return (
     <Screen contentStyle={styles.wrap}>
@@ -80,19 +81,31 @@ export default function HomeScreen() {
           <View style={[styles.trackFill, { width: `${pct}%` }]} />
         </View>
         <T variant="meta" style={styles.checklistBlurb}>
-          Every person you invite and every answer you add gives us another angle on you, and the more angles we
-          have the more precisely we can say what you do unusually well.
+          Two ways to build your profile: interview yourself about what pulls you in, and invite people who know
+          you. The more you add, the sharper it gets.
         </T>
-        <View style={{ gap: 10, marginTop: 14 }}>
-          {PROGRESS_CHECKLIST.map((p) => (
-            <View key={p.label} style={styles.checkRow}>
-              <View style={[styles.checkDot, p.done ? styles.checkDotDone : styles.checkDotOff]}>
-                {p.done ? <Text style={styles.checkMark}>✓</Text> : null}
-              </View>
-              <Text style={[styles.checkLabel, { color: p.done ? colors.ink : colors.inkSoft }]}>{p.label}</Text>
-              <Text style={styles.checkMeta}>{p.meta}</Text>
-            </View>
-          ))}
+        <View style={{ gap: 8, marginTop: 14 }}>
+          {PROGRESS_CHECKLIST.map((p, i) => {
+            const next = !p.done && i === nextIdx;
+            const Row = p.route ? Pressable : View;
+            return (
+              <Row
+                key={p.label}
+                onPress={p.route ? () => go(p.route as any) : undefined}
+                style={[styles.checkRow, next && styles.checkRowNext]}
+              >
+                <View style={[styles.checkDot, p.done ? styles.checkDotDone : styles.checkDotOff]}>
+                  {p.done ? <Text style={styles.checkMark}>✓</Text> : null}
+                </View>
+                <Text style={[styles.checkLabel, { color: p.done ? colors.ink : colors.inkSoft }]}>{p.label}</Text>
+                {p.route && !p.done ? (
+                  <Ionicons name="arrow-forward" size={15} color={next ? colors.accentInk : colors.muted} />
+                ) : (
+                  <Text style={styles.checkMeta}>{p.meta}</Text>
+                )}
+              </Row>
+            );
+          })}
         </View>
       </View>
     </Screen>
@@ -185,7 +198,8 @@ const styles = StyleSheet.create({
   track: { marginTop: 12, height: 10, borderRadius: 10, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
   trackFill: { height: '100%', borderRadius: 10, backgroundColor: colors.accent },
   checklistBlurb: { marginTop: 11, fontSize: 13.5, lineHeight: 20 },
-  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 8, paddingHorizontal: 10, marginHorizontal: -10, borderRadius: radius.md },
+  checkRowNext: { backgroundColor: colors.tintLime },
   checkDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   checkDotDone: { backgroundColor: colors.accent },
   checkDotOff: { borderWidth: 2, borderColor: colors.lineStrong },

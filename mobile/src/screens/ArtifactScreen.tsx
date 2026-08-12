@@ -56,11 +56,41 @@ export default function ArtifactScreen() {
         {a.story}
       </T>
 
+      {a.whyItPulls ? (
+        <View style={styles.pullsCard}>
+          <T variant="label" style={{ marginBottom: 0, color: colors.accentInk }}>
+            Why it pulls you
+          </T>
+          <Text style={styles.pullsBody}>{a.whyItPulls}</Text>
+        </View>
+      ) : null}
+
       <View style={styles.quoteCard}>
         <Text style={styles.quoteMark}>"</Text>
         <Text style={styles.quoteText}>{a.quote}</Text>
         <Text style={styles.quoteAuthor}>— {a.author}</Text>
       </View>
+
+      {a.deeper?.length ? (
+        <>
+          <T variant="label" style={styles.h}>
+            Go deeper
+          </T>
+          <Text style={styles.deeperHint}>Answer one to sharpen this. It reopens the interview.</Text>
+          <View style={{ gap: 9, marginTop: 12 }}>
+            {a.deeper.map((q, i) => (
+              <Pressable
+                key={i}
+                onPress={() => patch({ screen: 'chat', chatDraft: q })}
+                style={styles.deeperRow}
+              >
+                <Text style={styles.deeperText}>{q}</Text>
+                <Ionicons name="arrow-forward" size={15} color={colors.ink} />
+              </Pressable>
+            ))}
+          </View>
+        </>
+      ) : null}
 
       {PULLS[state.artifactKey]?.length ? (
         <>
@@ -141,6 +171,23 @@ const styles = StyleSheet.create({
   quoteAuthor: { fontFamily: font.bold, fontSize: 13.5, color: colors.muted, marginTop: 12 },
 
   pull: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft, paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.lineStrong },
+
+  pullsCard: { marginTop: 22, padding: 18, borderRadius: radius.lg, backgroundColor: colors.tintLime, borderWidth: 1.5, borderColor: colors.accentDeep },
+  pullsBody: { fontFamily: font.medium, fontSize: 15.5, lineHeight: 23, color: '#23231F', marginTop: 9 },
+
+  deeperHint: { fontFamily: font.medium, fontSize: 13, color: colors.muted, marginTop: 8 },
+  deeperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: 15,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+  },
+  deeperText: { flex: 1, fontFamily: font.semi, fontSize: 14.5, lineHeight: 20, color: colors.ink },
   transcriptBtn: {
     marginTop: 16,
     flexDirection: 'row',

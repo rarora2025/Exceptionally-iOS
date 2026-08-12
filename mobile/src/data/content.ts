@@ -16,10 +16,18 @@ export const HOME_FASCINATIONS = [
   { title: 'Environments', key: 'places' },
 ] as const;
 
-export const PROGRESS_CHECKLIST = [
-  { label: 'Invite 3 friends', meta: '3 of 3', done: true },
-  { label: 'Add a fascination', meta: '4 added', done: true },
-  { label: 'Add your resume', meta: 'Not yet', done: false },
+// Leads with the self-interview so the home page pushes you to do it. `route`
+// (a screen name) makes an item tappable straight into that flow.
+export const PROGRESS_CHECKLIST: {
+  label: string;
+  meta: string;
+  done: boolean;
+  route: string | null;
+}[] = [
+  { label: 'Interview yourself', meta: 'Start', done: false, route: 'fascSeed' },
+  { label: 'Name your super strengths', meta: 'Start', done: false, route: 'fascSeed' },
+  { label: 'Invite 3 people who know you', meta: 'Done', done: true, route: 'people' },
+  { label: 'Add your resume', meta: 'Later', done: false, route: null },
 ];
 
 // ---- Profile ----
@@ -42,7 +50,20 @@ export const COLOR_OPTIONS = [colors.surfaceSunken, colors.accent, colors.tintBl
 // Artifact detail content (what the person saw, story, pull quote).
 export const ARTIFACTS: Record<
   string,
-  { lens: string; title: string; synthesis: string; saw: string[]; story: string; quote: string; combo: string; author: string; tint: string }
+  {
+    lens: string;
+    title: string;
+    synthesis: string;
+    saw: string[];
+    story: string;
+    quote: string;
+    combo: string;
+    author: string;
+    tint: string;
+    // Self-interview / fascination artifacts add the driver + follow-up prompts.
+    whyItPulls?: string;
+    deeper?: string[];
+  }
 > = {
   david: {
     lens: 'How David sees you',
@@ -117,6 +138,13 @@ export const ARTIFACTS: Record<
     combo: 'Deep focus × Synthesis',
     author: 'Noah',
     tint: colors.surfaceSunken,
+    whyItPulls:
+      'It is not really about the empty calendar. You are drawn to the moment a tangled thing becomes legible, and that only happens when you can hold the whole shape in your head at once. Meetings break the shape before it forms.',
+    deeper: [
+      'When did a stretch of deep focus last change what you built?',
+      'Is it the quiet you need, or the uninterrupted length of time?',
+      'What is the after-work you would happily hand to someone else?',
+    ],
   },
   delegated: {
     lens: 'From your own interview',
@@ -134,6 +162,13 @@ export const ARTIFACTS: Record<
     combo: 'Decision rights × Accountability',
     author: 'Noah',
     tint: colors.surfaceSunken,
+    whyItPulls:
+      'The technology is the surface. What actually grips you is who gets to make the call, and what happens to accountability when a decision moves to a machine. You keep testing exactly where that line sits.',
+    deeper: [
+      'Where would you refuse to let an agent decide, even if it were more accurate?',
+      'What makes a decision feel like yours to answer for?',
+      'Is this about trust, or about who takes the blame when it goes wrong?',
+    ],
   },
 };
 
