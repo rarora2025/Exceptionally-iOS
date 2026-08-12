@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, TextInput } from 'react-native';
+import { View, StyleSheet, Pressable, Text, TextInput, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, Card, Avatar, BackLink } from '../ui/kit';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, initials, inviteLinkFor } from '../state/store';
 import * as haptics from '../lib/haptics';
-import { DIRECTORY, SUGGESTED_MESSAGE } from '../data/onboarding';
+import { DIRECTORY, RELATIONSHIP_OPTIONS, suggestMessage } from '../data/onboarding';
 
 export default function InviteScreen() {
   const { state, patch, go, addPerson } = useStore();
@@ -17,17 +18,47 @@ export default function InviteScreen() {
   const link = inviteLinkFor(state.suName);
   const fromPeople = state.inviteFrom === 'people';
 
+  // Message composer state (local to the screen).
+  const [relationship, setRelationship] = React.useState<string | null>(null);
+  const [variant, setVariant] = React.useState(0);
+  const [message, setMessage] = React.useState(suggestMessage(null, 0));
+  const [copied, setCopied] = React.useState(false);
+
+  const pickRelationship = (rel: string) => {
+    haptics.select();
+    const next = rel === relationship ? null : rel;
+    setRelationship(next);
+    setVariant(0);
+    setMessage(suggestMessage(next, 0));
+  };
+  const regenerate = () => {
+    haptics.select();
+    const v = variant + 1;
+    setVariant(v);
+    setMessage(suggestMessage(relationship, v));
+  };
+
+  const shareText = `${message}\n\n${link}`;
+
   const copyLink = async () => {
     await Clipboard.setStringAsync(link);
     haptics.success();
     patch({ copied: true });
     setTimeout(() => patch({ copied: false }), 1800);
   };
-  const copyMsg = async () => {
-    await Clipboard.setStringAsync(SUGGESTED_MESSAGE.join('\n\n'));
+  const copyMessage = async () => {
+    await Clipboard.setStringAsync(shareText);
     haptics.success();
-    patch({ msgCopied: true });
-    setTimeout(() => patch({ msgCopied: false }), 1800);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  const share = async () => {
+    haptics.tap();
+    try {
+      await Share.share({ message: shareText });
+    } catch {
+      /* user dismissed */
+    }
   };
   const ask = (p: { name: string; detail: string; tint: string }) => {
     if (state.askedPeople.includes(p.name)) return;
@@ -70,10 +101,7 @@ export default function InviteScreen() {
                   <Text style={styles.resultName}>{p.name}</Text>
                   <Text style={styles.resultDetail}>{p.detail}</Text>
                 </View>
-                <Pressable
-                  onPress={() => ask(p)}
-                  style={[styles.askBtn, asked && styles.askBtnOn]}
-                >
+                <Pressable onPress={() => ask(p)} style={[styles.askBtn, asked && styles.askBtnOn]}>
                   <Text style={styles.askText}>{asked ? 'Asked' : 'Ask'}</Text>
                 </Pressable>
               </View>
@@ -92,32 +120,63 @@ export default function InviteScreen() {
             {link}
           </Text>
         </View>
-        <View style={styles.linkBtns}>
-          <Button
-            title={state.copied ? 'Copied' : 'Copy link'}
-            variant={state.copied ? 'primary' : 'dark'}
-            compact
-            style={{ flex: 1 }}
-            onPress={copyLink}
-          />
-          <Button title="Messages" variant="secondary" compact style={{ flex: 1 }} onPress={copyLink} />
-        </View>
+        <Button
+          title={state.copied ? 'Copied' : 'Copy link'}
+          variant={state.copied ? 'primary' : 'dark'}
+          compact
+          style={{ marginTop: 10 }}
+          onPress={copyLink}
+        />
       </Card>
 
-      {/* suggested message */}
+      {/* share invite — relationship-tailored, editable message */}
       <View style={styles.msgCard}>
+        <T variant="label">Who are you asking?</T>
+        <View style={styles.relRow}>
+          {RELATIONSHIP_OPTIONS.map((rel) => {
+            const on = relationship === rel;
+            return (
+              <Pressable key={rel} onPress={() => pickRelationship(rel)} style={[styles.relChip, on && styles.relChipOn]}>
+                <Text style={[styles.relText, on && { color: colors.accentInk }]}>{rel}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <View style={styles.msgHead}>
-          <T variant="label">Suggested message</T>
-          <Pressable onPress={copyMsg} hitSlop={8}>
-            <Text style={styles.msgCopy}>{state.msgCopied ? 'Copied' : 'Copy'}</Text>
+          <T variant="label" style={{ marginBottom: 0 }}>
+            Your message
+          </T>
+          <Pressable onPress={regenerate} hitSlop={8} style={styles.regen}>
+            <Ionicons name="refresh" size={13} color={colors.link} />
+            <Text style={styles.regenText}>Regenerate</Text>
           </Pressable>
         </View>
-        <View style={styles.bubble}>
-          {SUGGESTED_MESSAGE.map((line, i) => (
-            <Text key={i} style={[styles.bubbleText, i > 0 && { marginTop: 10 }]}>
-              {line}
-            </Text>
-          ))}
+        <TextInput
+          value={message}
+          onChangeText={setMessage}
+          multiline
+          style={styles.msgInput}
+          placeholder="Write a note…"
+          placeholderTextColor={colors.muted}
+        />
+
+        <View style={styles.msgActions}>
+          <Button
+            title={copied ? 'Copied' : 'Copy'}
+            variant="secondary"
+            compact
+            style={{ flex: 1 }}
+            onPress={copyMessage}
+          />
+          <Button
+            title="Share"
+            variant="dark"
+            compact
+            style={{ flex: 1 }}
+            left={<Ionicons name="share-outline" size={17} color={colors.onDark} />}
+            onPress={share}
+          />
         </View>
       </View>
 
@@ -127,9 +186,11 @@ export default function InviteScreen() {
         style={styles.cta}
         onPress={() => go(fromPeople ? 'people' : 'home')}
       />
-      <Pressable onPress={() => patch({ screen: 'cLand', cTurn: 0 })} style={styles.previewBtn} hitSlop={8}>
-        <Text style={styles.previewText}>Preview what your people see →</Text>
-      </Pressable>
+      {!fromPeople ? (
+        <Pressable onPress={() => go('home')} style={styles.laterBtn} hitSlop={8}>
+          <Text style={styles.laterText}>I'll come back to this later</Text>
+        </Pressable>
+      ) : null}
     </Screen>
   );
 }
@@ -184,7 +245,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   linkText: { fontFamily: font.bold, fontSize: 13.5, color: colors.ink },
-  linkBtns: { flexDirection: 'row', gap: 8, marginTop: 10 },
 
   msgCard: {
     marginTop: 20,
@@ -194,18 +254,38 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.line,
   },
-  msgHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  msgCopy: { fontFamily: font.bold, fontSize: 13, color: colors.link },
-  bubble: {
-    marginTop: 12,
-    backgroundColor: colors.tintBlue,
-    borderRadius: 18,
-    borderBottomLeftRadius: 6,
-    padding: 15,
+  relRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
+  relChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.lineStrong,
+    backgroundColor: colors.surface,
   },
-  bubbleText: { fontFamily: font.medium, fontSize: 14.5, lineHeight: 21, color: colors.ink },
+  relChipOn: { backgroundColor: colors.accent, borderColor: colors.accentDeep },
+  relText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
+
+  msgHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
+  regen: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  regenText: { fontFamily: font.bold, fontSize: 12.5, color: colors.link },
+  msgInput: {
+    marginTop: 10,
+    minHeight: 96,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    padding: 14,
+    fontFamily: font.medium,
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: colors.ink,
+    textAlignVertical: 'top',
+  },
+  msgActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
 
   cta: { marginTop: 22 },
-  previewBtn: { alignItems: 'center', paddingVertical: 14 },
-  previewText: { fontFamily: font.bold, fontSize: 14.5, color: colors.link },
+  laterBtn: { alignItems: 'center', paddingVertical: 14 },
+  laterText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 });
