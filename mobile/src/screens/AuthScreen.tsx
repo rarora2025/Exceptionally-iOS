@@ -36,11 +36,11 @@ export default function AuthScreen() {
       <Wordmark />
 
       <View style={styles.hero}>
-        <T variant="display">Discover what makes you exceptional.</T>
+        <T variant="display">Discover what makes you exceptional and put it to work.</T>
         <View style={styles.rule} />
         <T variant="body" style={styles.sub}>
-          You're too close to see what you're best at. The people around you have known for years. This is where
-          you finally find out.
+          Uncover the strengths and fascinations that are uniquely yours, and turn them into work that actually
+          feels rewarding.
         </T>
       </View>
 
