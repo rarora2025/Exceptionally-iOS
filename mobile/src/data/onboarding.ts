@@ -45,28 +45,29 @@ export const SUGGESTED_MESSAGE = [
 // Relationship options for tailoring the suggested message.
 export const RELATIONSHIP_OPTIONS = ['Friend', 'Colleague', 'Manager', 'Family'] as const;
 
-// A couple of tones per relationship; "regenerate" cycles through them.
+// A couple of tones per relationship; "regenerate" cycles through them until an
+// AI endpoint is wired up (see src/lib/ai.ts). No em dashes, natural phrasing.
 const MESSAGE_TEMPLATES: Record<string, string[]> = {
   Friend: [
-    "Hey! I'm using Exceptionally to figure out what I'm actually good at and where to take my career. Would love your honest take — it's a short interview, about 5 minutes, by voice or text.",
-    "Hi! Doing this thing called Exceptionally to understand my strengths. You know me well, so your perspective would mean a lot. Takes about 5 minutes, voice or text.",
+    "Hey! I'm using an app called Exceptionally to figure out what I'm actually good at and where to take my career. I'd love your honest take. It's a short interview, about 5 minutes, and you can do it by voice or text.",
+    "Hi! I'm doing this thing called Exceptionally to understand my strengths. You know me well, so your perspective would mean a lot. It takes about 5 minutes, by voice or text.",
   ],
   Colleague: [
-    "Hi — I'm using Exceptionally to understand my strengths and how to build my career around them. I'd really value your perspective. It's a short 5-minute interview, by voice or text.",
-    "Hi — we've worked closely, so I'd love your read on what I do well. I'm mapping my strengths with Exceptionally. Quick 5-minute interview, voice or text.",
+    "Hi! I'm using Exceptionally to understand my strengths and how to build my career around them. Your perspective would really help. It's a short 5-minute interview, by voice or text.",
+    "Hi! We've worked closely, so I'd love your read on what I do well. I'm mapping my strengths with Exceptionally. It's a quick 5-minute interview, by voice or text.",
   ],
   Manager: [
-    "Hi — I'm using Exceptionally to better understand my strengths and where I add the most value. I'd really value your perspective. It's a quick 5-minute interview, by voice or text.",
-    "Hi — you've seen my work up close, so your perspective would be really valuable. I'm mapping my strengths with Exceptionally. Takes about 5 minutes.",
+    "Hi! I'm using Exceptionally to better understand my strengths and where I add the most value. Your perspective would really help. It's a quick 5-minute interview, by voice or text.",
+    "Hi! You've seen my work up close, so your read would be really valuable. I'm mapping my strengths with Exceptionally. It takes about 5 minutes, by voice or text.",
   ],
   Family: [
-    "Hi! I'm using Exceptionally to understand what makes me, well, me — and how to build a career around it. You've known me forever, so your take would mean a lot. Short 5-minute interview.",
-    "Hey! I'm figuring out my strengths and what I'm drawn to. Would love your perspective — it's a short interview, about 5 minutes, by voice or text.",
+    "Hi! I'm using Exceptionally to understand what makes me, well, me, and how to build a career around it. You've known me forever, so your take would mean a lot. It's a short 5-minute interview.",
+    "Hey! I'm figuring out my strengths and what I'm drawn to. I'd love your perspective. It's a short interview, about 5 minutes, by voice or text.",
   ],
 };
 
 const DEFAULT_MESSAGE =
-  "Hi — I'm using Exceptionally to understand what I do unusually well and how to build my career around it. I'd really value your perspective. It's a short 5-minute interview, by voice or text.";
+  "Hi! I'm using an app called Exceptionally to figure out what I'm genuinely good at and how to build my career around it. Your perspective would really help. It's a short interview, about 5 minutes, by voice or text.";
 
 export const suggestMessage = (relationship: string | null, variant: number): string => {
   const list = relationship ? MESSAGE_TEMPLATES[relationship] : null;

@@ -12,6 +12,7 @@ import {
   ScrollViewProps,
   Platform,
   Animated,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -99,15 +100,22 @@ export const Screen: React.FC<{
   contentStyle?: ViewProps['style'];
   edges?: ('top' | 'bottom')[];
 }> = ({ children, scroll = true, contentStyle, edges = ['top'] }) => {
+  // Tapping any empty area dismisses the keyboard. A child that handles the
+  // touch (button, input, link) becomes the responder first, so this only fires
+  // for taps on blank space — no interference with real controls.
   const inner = (
-    <View style={[styles.screenInner, contentStyle]}>{children}</View>
+    <Pressable style={[styles.screenInner, contentStyle]} onPress={Keyboard.dismiss} accessible={false}>
+      {children}
+    </Pressable>
   );
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
+          bounces={false}
           contentContainerStyle={styles.scrollContent}
         >
           {inner}

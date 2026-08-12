@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Animated, Easing } from 'react-native';
 import { useStore, Screen } from './state/store';
 import { useAuth } from './state/auth';
 import { colors } from './theme';
@@ -69,6 +69,32 @@ function ScreenFor({ screen }: { screen: Screen }) {
   }
 }
 
+// Cross-fades + gently lifts each screen as it enters, so navigation reads as a
+// native transition instead of a hard cut between web-style pages.
+function AnimatedScreen({ screen }: { screen: Screen }) {
+  const anim = React.useRef(new Animated.Value(1)).current;
+  React.useEffect(() => {
+    anim.setValue(0);
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [screen, anim]);
+  return (
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: anim,
+        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+      }}
+    >
+      <ScreenFor screen={screen} />
+    </Animated.View>
+  );
+}
+
 export default function Router() {
   const { state, go, hydrate, reset } = useStore();
   const { configured, loading, session } = useAuth();
@@ -96,7 +122,7 @@ export default function Router() {
   const showTabs = TABBED.includes(state.screen);
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScreenFor screen={state.screen} />
+      <AnimatedScreen screen={state.screen} />
       {showTabs ? <TabBar /> : null}
     </View>
   );
