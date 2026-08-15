@@ -72,6 +72,8 @@ export interface AppState {
   fascSeed: string;
   fTurn: number;
   fTranscript: string;
+  fascLists: Record<string, string[]>; // per-bucket list of preferences the user added
+  fascDone: string[]; // items already taken deeper via the AI interview
   // tools
   toolKey: string | null;
   toolPhase: 'idle' | 'running' | 'done';
@@ -127,6 +129,8 @@ export const initialState: AppState = {
   fascSeed: 'AI agents',
   fTurn: 0,
   fTranscript: '',
+  fascLists: {},
+  fascDone: [],
   toolKey: null,
   toolPhase: 'idle',
   toolStep: 0,

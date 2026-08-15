@@ -110,7 +110,8 @@ export default function FascInterviewScreen() {
       transcript: turns.map((t) => ({ q: t.question, a: t.answer })),
       result: artifact.one_liner,
     });
-    patch({ screen: 'profile', fTurn: 0, fascSeed: '' });
+    const fascDone = state.fascDone.includes(interest) ? state.fascDone : [...state.fascDone, interest];
+    patch({ screen: 'fascBucket', fTurn: 0, fascSeed: '', fascDone });
   };
 
   /* ---------------- result ---------------- */

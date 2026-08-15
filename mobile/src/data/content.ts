@@ -24,9 +24,8 @@ export const PROGRESS_CHECKLIST: {
   done: boolean;
   route: string | null;
 }[] = [
-  { label: 'Interview yourself', meta: 'Start', done: false, route: 'fascSeed' },
-  { label: 'Name your super strengths', meta: 'Start', done: false, route: 'fascSeed' },
-  { label: 'Invite 3 people who know you', meta: 'Done', done: true, route: 'people' },
+  { label: 'Interview yourself', meta: 'Start', done: false, route: 'fascHub' },
+  { label: 'Invite people who know you', meta: 'Done', done: true, route: 'people' },
   { label: 'Add your resume', meta: 'Later', done: false, route: null },
 ];
 
@@ -183,6 +182,8 @@ export const FASC_BUCKETS = [
     blurb: 'The domains you are deeply drawn to, and the deeper questions inside them.',
     heading: 'What keeps pulling you back',
     intro: 'The industries and domains you are deeply drawn to, and the questions you keep circling inside them.',
+    prompt: 'Which industries or domains are you drawn to? Add a few, then pick one to go deep on with an interview.',
+    suggestions: ['Technology', 'Healthcare', 'Finance', 'Climate', 'Education', 'Media', 'Consumer', 'Biotech', 'Gaming', 'Policy', 'Sports', 'Real estate'],
     items: [
       {
         title: 'Technology',
@@ -227,6 +228,8 @@ export const FASC_BUCKETS = [
     blurb: 'The kinds of work you naturally love, and the work that tends to drain you.',
     heading: 'What work pulls you in',
     intro: 'The kinds of day-to-day work you naturally love, and the work that tends to drain you.',
+    prompt: 'What kinds of work do you love doing? Add a few, then pick one to go deep on with an interview.',
+    suggestions: ['Solving ambiguous problems', 'Building from scratch', 'Explaining ideas', 'Analyzing data', 'Designing systems', 'Leading people', 'Research', 'Writing', 'Strategy', 'Hands-on making', 'Negotiating', 'Operations'],
     items: [
       {
         title: 'Problem solving',
@@ -266,6 +269,8 @@ export const FASC_BUCKETS = [
     blurb: 'The cultures where you expand, and the ones where you shrink.',
     heading: 'Where you love to work',
     intro: 'The cultures and environments you naturally expand in, and the ones that tend to shrink you.',
+    prompt: 'What kind of environment brings out your best? Add a few, then pick one to go deep on with an interview.',
+    suggestions: ['High autonomy', 'Fast pace', 'Small teams', 'Deep focus time', 'Lots of collaboration', 'Clear structure', 'High trust', 'Mission-driven', 'Low hierarchy', 'Steady and calm', 'High stakes', 'Public recognition'],
     items: [
       {
         title: 'High-trust environments',

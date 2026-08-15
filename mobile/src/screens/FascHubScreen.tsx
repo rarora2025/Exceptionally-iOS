@@ -8,32 +8,42 @@ import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
 
 export default function FascHubScreen() {
-  const { patch, go } = useStore();
+  const { state, patch, go } = useStore();
   return (
     <Screen contentStyle={styles.wrap}>
       <BackLink label="Profile" onPress={() => go('profile')} />
       <T variant="title" style={styles.h1}>
-        My Fascinations
+        Interview yourself
+      </T>
+      <T variant="body" style={styles.sub}>
+        Pick a lens, list what you're drawn to, then go deep on one. A short interview uncovers the real reason it
+        pulls you in.
       </T>
 
-      <View style={{ gap: 9, marginTop: 20 }}>
-        {FASC_BUCKETS.map((b) => (
-          <Pressable
-            key={b.key}
-            onPress={() => patch({ screen: 'fascBucket', fascBucket: b.key })}
-            style={styles.card}
-          >
-            <View style={[styles.tile, { backgroundColor: b.tint }]}>
-              <Text style={styles.emoji}>{b.emoji}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{b.title}</Text>
-              <Text style={styles.count}>{b.items.length} learned · latest {b.latest}</Text>
-              <Text style={styles.blurb}>{b.blurb}</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={colors.ink} />
-          </Pressable>
-        ))}
+      <View style={{ gap: 10, marginTop: 22 }}>
+        {FASC_BUCKETS.map((b) => {
+          const list = state.fascLists[b.key] || [];
+          const done = list.filter((i) => state.fascDone.includes(i)).length;
+          const meta =
+            list.length === 0 ? 'Tap to start' : `${list.length} listed${done ? ` · ${done} explored` : ''}`;
+          return (
+            <Pressable
+              key={b.key}
+              onPress={() => patch({ screen: 'fascBucket', fascBucket: b.key })}
+              style={styles.card}
+            >
+              <View style={[styles.tile, { backgroundColor: b.tint }]}>
+                <Text style={styles.emoji}>{b.emoji}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title}>{b.title}</Text>
+                <Text style={styles.count}>{meta}</Text>
+                <Text style={styles.blurb}>{b.blurb}</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={colors.ink} />
+            </Pressable>
+          );
+        })}
       </View>
     </Screen>
   );
@@ -42,6 +52,7 @@ export default function FascHubScreen() {
 const styles = StyleSheet.create({
   wrap: { paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
   h1: { marginTop: 18, fontSize: 31 },
+  sub: { marginTop: 12, fontSize: 15, lineHeight: 22 },
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
