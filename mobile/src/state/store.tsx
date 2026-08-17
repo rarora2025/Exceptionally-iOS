@@ -81,6 +81,7 @@ export interface AppState {
   artifactKey: string; // which artifact detail is open
   // fascinations
   fascBucket: string;
+  fascFrom: string; // where the user entered the fascinations hub from ('home' | 'profile')
   fascSeed: string;
   fTurn: number;
   fTranscript: string;
@@ -140,6 +141,7 @@ export const initialState: AppState = {
   fascPicker: null,
   artifactKey: 'david',
   fascBucket: 'domains',
+  fascFrom: 'profile',
   fascSeed: 'AI agents',
   fTurn: 0,
   fTranscript: '',

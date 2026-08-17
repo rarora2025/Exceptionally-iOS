@@ -1,72 +1,49 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, TextInput, Share, ScrollView } from 'react-native';
+import { View, StyleSheet, Pressable, Text, TextInput, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, T, Button, BackLink } from '../ui/kit';
-import { colors, font, radius } from '../theme';
-import { useStore, inviteLinkFor } from '../state/store';
+import { Screen, T, Button, Avatar, BackLink } from '../ui/kit';
+import { colors, font, radius, shadow } from '../theme';
+import { useStore, initials, inviteLinkFor } from '../state/store';
 import * as haptics from '../lib/haptics';
-import { RELATIONSHIP_OPTIONS, suggestMessage } from '../data/onboarding';
-import { generateInviteMessage } from '../lib/ai';
+import { DIRECTORY } from '../data/onboarding';
 
-const CHIPS = [...RELATIONSHIP_OPTIONS, 'Other'] as const;
+const DEFAULT_MSG =
+  "Hi! I'm using Exceptionally to figure out what I'm genuinely good at and where to take my career. Your take would really help. It's a short interview, about 5 minutes, by voice or text.";
 
 export default function InviteScreen() {
-  const { state, go } = useStore();
+  const { state, patch, go, addPerson } = useStore();
   const link = inviteLinkFor(state.suName);
   const fromPeople = state.inviteFrom === 'people';
 
-  const [relationship, setRelationship] = React.useState<string | null>(null);
-  const [other, setOther] = React.useState('');
-  const [seed, setSeed] = React.useState(0);
-  const [message, setMessage] = React.useState(suggestMessage(null, 0));
-  const [busy, setBusy] = React.useState(false);
-  const [copied, setCopied] = React.useState(false);
+  const [message, setMessage] = React.useState(DEFAULT_MSG);
+  const [editing, setEditing] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
 
-  const effectiveRel = relationship === 'Other' ? other.trim() || null : relationship;
-
-  const pickRelationship = (rel: string) => {
-    haptics.select();
-    const next = rel === relationship ? null : rel;
-    setRelationship(next);
-    setSeed(0);
-    const r = next === 'Other' ? other.trim() || null : next;
-    setMessage(suggestMessage(r, 0));
-  };
-
-  const regenerate = async () => {
-    if (busy) return;
-    haptics.select();
-    const next = seed + 1;
-    setSeed(next);
-    setBusy(true);
-    const msg = await generateInviteMessage({ relationship: effectiveRel, senderName: state.suName }, next);
-    setMessage(msg);
-    setBusy(false);
-  };
-
-  const shareText = `${message}\n\n${link}`;
+  const pq = (state.peopleQuery || '').trim().toLowerCase();
+  const results = pq
+    ? DIRECTORY.filter((p) => (p.name + ' ' + p.detail).toLowerCase().includes(pq))
+    : [];
 
   const share = async () => {
     haptics.tap();
     try {
-      await Share.share({ message: shareText });
+      await Share.share({ message: `${message}\n\n${link}` });
     } catch {
       /* dismissed */
     }
-  };
-  const copyMessage = async () => {
-    await Clipboard.setStringAsync(shareText);
-    haptics.success();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
   };
   const copyLink = async () => {
     await Clipboard.setStringAsync(link);
     haptics.success();
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 1600);
+  };
+  const ask = (p: { name: string; detail: string; tint: string }) => {
+    if (state.askedPeople.includes(p.name)) return;
+    haptics.select();
+    patch({ askedPeople: [...state.askedPeople, p.name] });
+    addPerson(p.name, p.detail, p.tint);
   };
 
   return (
@@ -75,65 +52,76 @@ export default function InviteScreen() {
       <T variant="title" style={styles.h1}>
         Invite your people
       </T>
-      <T variant="meta" style={styles.sub}>
-        Pick who you're asking and we'll draft the note. Edit it however you like.
-      </T>
 
-      {/* relationship — one scrollable line, with a custom "Other" */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.chipRow}
-        style={styles.chipScroll}
-      >
-        {CHIPS.map((rel) => {
-          const on = relationship === rel;
-          return (
-            <Pressable key={rel} onPress={() => pickRelationship(rel)} style={[styles.chip, on && styles.chipOn]}>
-              <Text style={[styles.chipText, on && { color: colors.accentInk }]}>{rel}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {relationship === 'Other' ? (
+      {/* add friends already on the app */}
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={17} color={colors.muted} />
         <TextInput
-          value={other}
-          onChangeText={setOther}
-          placeholder="Who are they to you? (e.g. mentor, teammate)"
+          value={state.peopleQuery}
+          onChangeText={(t) => patch({ peopleQuery: t })}
+          placeholder="Add friends already on Exceptionally"
           placeholderTextColor={colors.muted}
-          style={styles.otherInput}
+          autoCapitalize="none"
+          style={styles.searchInput}
+        />
+      </View>
+
+      {results.length ? (
+        <View style={styles.results}>
+          {results.map((p) => {
+            const asked = state.askedPeople.includes(p.name);
+            return (
+              <View key={p.name} style={styles.resultRow}>
+                <Avatar initials={initials(p.name)} tint={p.tint} size={34} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.resultName}>{p.name}</Text>
+                  <Text style={styles.resultDetail}>{p.detail}</Text>
+                </View>
+                <Pressable onPress={() => ask(p)} style={[styles.askBtn, asked && styles.askBtnOn]}>
+                  <Text style={styles.askText}>{asked ? 'Asked' : 'Ask'}</Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      ) : (
+        <Text style={styles.searchHint}>Search by name or email to send someone an interview.</Text>
+      )}
+
+      <View style={{ flex: 1, minHeight: 16 }} />
+
+      {/* editable message (only when Edit message is tapped) */}
+      {editing ? (
+        <TextInput
+          value={message}
+          onChangeText={setMessage}
+          multiline
           autoFocus
+          style={styles.msgInput}
+          placeholder="Write your invite message…"
+          placeholderTextColor={colors.muted}
         />
       ) : null}
 
-      {/* message */}
-      <View style={styles.msgHead}>
-        <T variant="label" style={{ marginBottom: 0 }}>
-          Your message
-        </T>
-        <Pressable onPress={regenerate} hitSlop={8} style={styles.regen} disabled={busy}>
-          <Ionicons name="sparkles" size={13} color={colors.link} />
-          <Text style={styles.regenText}>{busy ? 'Writing…' : 'Regenerate'}</Text>
-        </Pressable>
-      </View>
-      <TextInput
-        value={message}
-        onChangeText={setMessage}
-        multiline
-        style={styles.msgInput}
-        placeholder="Write a note…"
-        placeholderTextColor={colors.muted}
-      />
+      {/* your unique link */}
+      <Pressable onPress={copyLink} style={styles.linkRow}>
+        <Ionicons name="link" size={15} color={colors.muted} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.linkLabel}>Your unique link</Text>
+          <Text style={styles.linkText} numberOfLines={1}>
+            {link}
+          </Text>
+        </View>
+        <Text style={styles.linkCopy}>{linkCopied ? 'Copied' : 'Copy'}</Text>
+      </Pressable>
 
       <View style={styles.actions}>
         <Button
-          title={copied ? 'Copied' : 'Copy'}
+          title={editing ? 'Done' : 'Edit message'}
           variant="secondary"
           compact
           style={{ flex: 1 }}
-          onPress={copyMessage}
+          onPress={() => setEditing((e) => !e)}
         />
         <Button
           title="Share invite"
@@ -145,22 +133,6 @@ export default function InviteScreen() {
         />
       </View>
 
-      {/* compact link row */}
-      <Pressable onPress={copyLink} style={styles.linkRow}>
-        <Ionicons name="link" size={15} color={colors.muted} />
-        <Text style={styles.linkText} numberOfLines={1}>
-          {link}
-        </Text>
-        <Text style={styles.linkCopy}>{linkCopied ? 'Copied' : 'Copy'}</Text>
-      </Pressable>
-
-      <View style={{ flex: 1, minHeight: 8 }} />
-
-      <Button
-        title={fromPeople ? 'Done' : 'Next'}
-        variant="primary"
-        onPress={() => go(fromPeople ? 'people' : 'home')}
-      />
       {!fromPeople ? (
         <Pressable onPress={() => go('home')} style={styles.laterBtn} hitSlop={8}>
           <Text style={styles.laterText}>I'll come back to this later</Text>
@@ -173,45 +145,48 @@ export default function InviteScreen() {
 const styles = StyleSheet.create({
   wrap: { flex: 1, paddingTop: 12, paddingBottom: 16 },
   h1: { marginTop: 4 },
-  sub: { marginTop: 8, maxWidth: '94%' },
 
-  chipScroll: { marginTop: 20, marginHorizontal: -24, flexGrow: 0 },
-  chipRow: { paddingHorizontal: 24, gap: 8 },
-  chip: {
-    paddingHorizontal: 15,
-    paddingVertical: 9,
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 22,
+    paddingHorizontal: 16,
+    height: 52,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.lineStrong,
     backgroundColor: colors.surface,
   },
-  chipOn: { backgroundColor: colors.accent, borderColor: colors.accentDeep },
-  chipText: { fontFamily: font.bold, fontSize: 13.5, color: colors.inkSoft },
+  searchInput: { flex: 1, fontFamily: font.semi, fontSize: 15, color: colors.ink },
+  searchHint: { fontFamily: font.medium, fontSize: 13.5, color: colors.muted, marginTop: 12, paddingHorizontal: 4 },
 
-  otherInput: {
-    marginTop: 10,
-    height: 50,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    paddingHorizontal: 14,
-    fontFamily: font.semi,
-    fontSize: 15,
-    color: colors.ink,
-  },
-
-  msgHead: {
+  results: { marginTop: 12, gap: 7 },
+  resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 22,
+    gap: 12,
+    padding: 11,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    ...shadow.soft,
   },
-  regen: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  regenText: { fontFamily: font.bold, fontSize: 12.5, color: colors.link },
+  resultName: { fontFamily: font.bold, fontSize: 14.5, color: colors.ink },
+  resultDetail: { fontFamily: font.medium, fontSize: 12.5, color: colors.muted, marginTop: 1 },
+  askBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+  },
+  askBtnOn: { backgroundColor: colors.accent, borderColor: colors.accentDeep },
+  askText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
+
   msgInput: {
-    marginTop: 10,
-    minHeight: 128,
+    minHeight: 110,
+    marginBottom: 12,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1.5,
@@ -224,20 +199,20 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  actions: { flexDirection: 'row', gap: 9, marginTop: 12 },
-
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    marginTop: 14,
-    paddingHorizontal: 14,
-    height: 46,
-    borderRadius: radius.pill,
+    gap: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radius.md,
     backgroundColor: colors.surfaceSunken,
   },
-  linkText: { flex: 1, fontFamily: font.semi, fontSize: 13, color: colors.inkSoft },
+  linkLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.muted },
+  linkText: { fontFamily: font.bold, fontSize: 13.5, color: colors.ink, marginTop: 2 },
   linkCopy: { fontFamily: font.bold, fontSize: 12.5, color: colors.link },
+
+  actions: { flexDirection: 'row', gap: 9, marginTop: 12 },
 
   laterBtn: { alignItems: 'center', paddingVertical: 13 },
   laterText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },

@@ -255,7 +255,7 @@ export const Avatar: React.FC<{ initials: string; tint: string; size?: number }>
       { width: size, height: size, borderRadius: size / 2, backgroundColor: tint },
     ]}
   >
-    <Text style={styles.avatarText}>{initials}</Text>
+    <Text style={[styles.avatarText, { fontSize: Math.round(size * 0.4) }]}>{initials}</Text>
   </View>
 );
 

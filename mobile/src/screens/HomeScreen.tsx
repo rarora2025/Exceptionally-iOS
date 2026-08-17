@@ -55,7 +55,7 @@ export default function HomeScreen() {
       </View>
 
       {/* My Fascinations */}
-      <Pressable onPress={() => go('fascHub')} style={styles.fascTile}>
+      <Pressable onPress={() => patch({ screen: 'fascHub', fascFrom: 'home' })} style={styles.fascTile}>
         <Text style={styles.fascTileText}>My Fascinations</Text>
         <Ionicons name="arrow-forward" size={20} color={colors.accentInk} />
       </Pressable>
@@ -63,7 +63,7 @@ export default function HomeScreen() {
         {HOME_FASCINATIONS.map((f) => (
           <Pressable
             key={f.key}
-            onPress={() => patch({ screen: 'fascBucket', fascBucket: f.key })}
+            onPress={() => patch({ screen: 'fascBucket', fascBucket: f.key, fascFrom: 'home' })}
             style={styles.fascChip}
           >
             <Text style={styles.fascChipText}>{f.title}</Text>
@@ -91,7 +91,7 @@ export default function HomeScreen() {
             return (
               <Row
                 key={p.label}
-                onPress={p.route ? () => go(p.route as any) : undefined}
+                onPress={p.route ? () => patch({ screen: p.route as any, fascFrom: 'home' }) : undefined}
                 style={[styles.checkRow, next && styles.checkRowNext]}
               >
                 <View style={[styles.checkDot, p.done ? styles.checkDotDone : styles.checkDotOff]}>

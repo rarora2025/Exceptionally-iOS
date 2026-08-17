@@ -97,7 +97,7 @@ export default function FascDiscoverScreen() {
       <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
         <ActivityIndicator color={colors.ink} />
         <T variant="heading" style={{ marginTop: 18, textAlign: 'center' }}>
-          Pulling out your topics.
+          One sec.
         </T>
         <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
           Reading back through what you said.
@@ -129,7 +129,7 @@ export default function FascDiscoverScreen() {
       <View style={styles.track}>
         <View style={[styles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
       </View>
-      <Text style={styles.turnLabel}>Finding your topics · question {turns.length + 1}</Text>
+      <Text style={styles.turnLabel}>Question {turns.length + 1}</Text>
 
       {phase === 'loading' || !current ? (
         <View style={styles.qBubble}>

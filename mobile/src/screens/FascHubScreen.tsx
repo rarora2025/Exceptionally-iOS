@@ -11,13 +11,12 @@ export default function FascHubScreen() {
   const { state, patch, go } = useStore();
   return (
     <Screen contentStyle={styles.wrap}>
-      <BackLink label="Profile" onPress={() => go('profile')} />
+      <BackLink
+        label={state.fascFrom === 'home' ? 'Home' : 'Profile'}
+        onPress={() => go(state.fascFrom === 'home' ? 'home' : 'profile')}
+      />
       <T variant="title" style={styles.h1}>
         Interview yourself
-      </T>
-      <T variant="body" style={styles.sub}>
-        Three lenses on what you're built for. Each starts with a short interview to find what you're drawn to,
-        then digs into why.
       </T>
 
       <View style={{ gap: 10, marginTop: 22 }}>

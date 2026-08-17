@@ -22,7 +22,6 @@ export default function ProfileScreen() {
           <T variant="heading" style={{ fontSize: 26 }}>
             Noah Reyes
           </T>
-          <Text style={styles.count}>Built from 5 artifacts</Text>
         </View>
         <Pressable onPress={() => go('people')} style={styles.inviteBtn}>
           <Text style={styles.inviteText}>Invite</Text>
@@ -57,7 +56,7 @@ export default function ProfileScreen() {
 
       <View style={styles.section2}>
         <T variant="label">Fascinations</T>
-        <Pressable onPress={() => go('fascHub')} hitSlop={8}>
+        <Pressable onPress={() => patch({ screen: 'fascHub', fascFrom: 'profile' })} hitSlop={8}>
           <Text style={styles.viewAll}>View all →</Text>
         </Pressable>
       </View>
