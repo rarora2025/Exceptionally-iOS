@@ -113,6 +113,7 @@ export default function FascInterviewScreen() {
     const fascDone = state.fascDone.includes(interest) ? state.fascDone : [...state.fascDone, interest];
     const saved = {
       interest,
+      lens: state.fascBucket,
       title: artifact.title,
       oneLiner: artifact.one_liner,
       whyItPulls: artifact.deeper_mechanism,
