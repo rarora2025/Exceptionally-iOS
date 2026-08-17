@@ -1,23 +1,32 @@
 // Edge Function: interview-turn
-// Given the interview so far, returns the single best next question for the
-// fascination (interest) self-interview. Stateless: the app passes the running
-// turns; this function plans the format + wrap-up window and asks the model.
+// Returns the single best next question for a self-interview. Two modes:
+//   mode "discover" (+ lens) — a short interview that SURFACES a handful of
+//     candidate topics in a lens (industries / work / environments).
+//   mode "interest" (default, + interest) — the deeper root-cause interview
+//     about ONE chosen topic.
+// Stateless: the app passes the running turns; this plans the format + wrap
+// window and asks the model. The first question is fixed verbatim copy.
 //
 // Deploy:  supabase functions deploy interview-turn
-// Body: { interest, turns: [{question, answer, quality}], priorAsked: [] }
+// Body: { mode?, interest?, lens?, turns:[{question,answer,quality}], priorAsked:[] }
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { cors, json, structured, obj } from '../_shared/openai.ts';
-import { INTERVIEW_SYSTEM_INTEREST, buildInterviewInterestUser, INTERVIEW_TYPES, fillInterviewTokens } from '../_shared/prompts.ts';
+import {
+  INTERVIEW_SYSTEM_INTEREST,
+  buildInterviewInterestUser,
+  INTERVIEW_TYPES,
+  fillInterviewTokens,
+  DISCOVER_SYSTEM,
+  buildDiscoverUser,
+  DISCOVER_LENSES,
+} from '../_shared/prompts.ts';
 
-// Interest self-interview runs "deep" (pretty_close): 6–9 questions.
-const MIN_Q = 6;
-const MAX_Q = 9;
+// Deeper interest interview runs longer; discovery is short (breadth).
+const RANGE = { interest: { min: 6, max: 9 }, discover: { min: 4, max: 6 } };
 
-// Format variety, planned in code so the model only fills content: deep mode is
-// open-led with an occasional tap as a change-up.
 function planFormat(n: number): 'open' | 'choice' | 'binary' {
-  if (n === 1) return 'open'; // opener is always the exact first question
+  if (n === 1) return 'open';
   if (n % 4 === 0) return 'choice';
   if (n % 5 === 0) return 'binary';
   return 'open';
@@ -46,14 +55,20 @@ const SCHEMA = obj({
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
-    const { interest, turns = [], priorAsked = [] } = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
+    const { mode = 'interest', interest, lens = 'domains', turns = [], priorAsked = [] } = body;
+    const discover = mode === 'discover';
     const answered = Array.isArray(turns) ? turns.length : 0;
     const questionNumber = answered + 1;
+    const { min, max } = discover ? RANGE.discover : RANGE.interest;
 
-    // The very first question is fixed copy (verbatim), no model call needed.
+    // First question is fixed, verbatim copy — no model call.
     if (questionNumber === 1) {
+      const first = discover
+        ? (DISCOVER_LENSES[lens] ?? DISCOVER_LENSES.domains).firstQuestion
+        : fillInterviewTokens(INTERVIEW_TYPES.interest.firstQuestion, { subject: interest });
       return json({
-        questionText: fillInterviewTokens(INTERVIEW_TYPES.interest.firstQuestion, { subject: interest }),
+        questionText: first,
         questionType: 'open_text',
         options: [],
         topic: 'opening',
@@ -63,29 +78,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const canEnd = questionNumber > MIN_Q;
-    const mustEnd = questionNumber >= MAX_Q;
+    const canEnd = questionNumber > min;
+    const mustEnd = questionNumber >= max;
     const format = planFormat(questionNumber);
 
-    const user = buildInterviewInterestUser({
-      interest: interest || 'this interest',
-      turns,
-      priorAsked,
-      questionNumber,
-      minQuestions: MIN_Q,
-      maxQuestions: MAX_Q,
-      canEnd,
-      mustEnd,
-      format,
-    });
+    const system = discover ? DISCOVER_SYSTEM(lens) : INTERVIEW_SYSTEM_INTEREST;
+    const user = discover
+      ? buildDiscoverUser({ lens, turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format })
+      : buildInterviewInterestUser({ interest: interest || 'this interest', turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format });
 
-    const out = await structured<TurnOut>(
-      INTERVIEW_SYSTEM_INTEREST,
-      user,
-      'interview_turn',
-      SCHEMA,
-      0.9,
-    );
+    const out = await structured<TurnOut>(system, user, 'interview_turn', SCHEMA, 0.9);
     return json(out);
   } catch (e) {
     return json({ error: String(e) }, 500);

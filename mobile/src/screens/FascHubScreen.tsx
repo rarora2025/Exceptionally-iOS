@@ -16,16 +16,16 @@ export default function FascHubScreen() {
         Interview yourself
       </T>
       <T variant="body" style={styles.sub}>
-        Pick a lens, list what you're drawn to, then go deep on one. A short interview uncovers the real reason it
-        pulls you in.
+        Three lenses on what you're built for. Each starts with a short interview to find what you're drawn to,
+        then digs into why.
       </T>
 
       <View style={{ gap: 10, marginTop: 22 }}>
         {FASC_BUCKETS.map((b) => {
-          const list = state.fascLists[b.key] || [];
-          const done = list.filter((i) => state.fascDone.includes(i)).length;
+          const topics = state.fascTopics[b.key] || [];
+          const done = topics.filter((t) => state.fascDone.includes(t.title)).length;
           const meta =
-            list.length === 0 ? 'Tap to start' : `${list.length} listed${done ? ` · ${done} explored` : ''}`;
+            topics.length === 0 ? 'Tap to start' : `${topics.length} found${done ? ` · ${done} explored` : ''}`;
           return (
             <Pressable
               key={b.key}

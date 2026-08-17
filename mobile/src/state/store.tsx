@@ -18,6 +18,8 @@ export type Screen =
   | 'artifact'
   | 'fascHub'
   | 'fascBucket'
+  | 'fascDiscover'
+  | 'fascTopics'
   | 'fascSeed'
   | 'fascInterview'
   | 'fascResult'
@@ -74,6 +76,7 @@ export interface AppState {
   fTranscript: string;
   fascLists: Record<string, string[]>; // per-bucket list of preferences the user added
   fascDone: string[]; // items already taken deeper via the AI interview
+  fascTopics: Record<string, { title: string; note: string }[]>; // topics surfaced by the discovery interview, per bucket
   // tools
   toolKey: string | null;
   toolPhase: 'idle' | 'running' | 'done';
@@ -131,6 +134,7 @@ export const initialState: AppState = {
   fTranscript: '',
   fascLists: {},
   fascDone: [],
+  fascTopics: {},
   toolKey: null,
   toolPhase: 'idle',
   toolStep: 0,

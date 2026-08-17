@@ -16,6 +16,8 @@ import ArtifactScreen from './screens/ArtifactScreen';
 import PeopleScreen from './screens/PeopleScreen';
 import FascHubScreen from './screens/FascHubScreen';
 import FascBucketScreen from './screens/FascBucketScreen';
+import FascDiscoverScreen from './screens/FascDiscoverScreen';
+import FascTopicsScreen from './screens/FascTopicsScreen';
 import FascSeedScreen from './screens/FascSeedScreen';
 import FascInterviewScreen from './screens/FascInterviewScreen';
 import ToolsScreen from './screens/ToolsScreen';
@@ -28,7 +30,7 @@ import { CLandScreen, CIntroScreen, CInterviewScreen, CReviewScreen, CDoneScreen
 // Screens that show the floating tab bar.
 const TABBED: Screen[] = [
   'home', 'profile', 'tools', 'people', 'artifact',
-  'fascHub', 'fascBucket', 'fascSeed', 'fascInterview', 'fascResult', 'toolRun',
+  'fascHub', 'fascBucket', 'fascDiscover', 'fascTopics', 'fascSeed', 'fascInterview', 'fascResult', 'toolRun',
   'transcript', 'synthesis',
 ];
 
@@ -52,6 +54,8 @@ function ScreenFor({ screen }: { screen: Screen }) {
     case 'people': return <PeopleScreen />;
     case 'fascHub': return <FascHubScreen />;
     case 'fascBucket': return <FascBucketScreen />;
+    case 'fascDiscover': return <FascDiscoverScreen />;
+    case 'fascTopics': return <FascTopicsScreen />;
     case 'fascSeed': return <FascSeedScreen />;
     case 'fascInterview':
     case 'fascResult': return <FascInterviewScreen />;

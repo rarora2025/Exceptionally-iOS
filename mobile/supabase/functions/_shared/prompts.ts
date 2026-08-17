@@ -221,3 +221,133 @@ ${signalJson}
 
 Write the single fascination artifact for this interest. Be honest about confidence given the evidence depth.`;
 }
+
+// ==========================================================================
+// DISCOVERY interviews — a short conversation per lens that SURFACES a handful
+// of concrete candidates the person is drawn to (breadth). Going deep on the
+// root cause of any one is the separate interest interview above (depth).
+// ==========================================================================
+
+export const DISCOVER_LENSES: Record<
+  string,
+  { label: string; surface: string; firstQuestion: string; rubric: string }
+> = {
+  domains: {
+    label: 'industries and fields',
+    surface: 'the specific industries, fields, and domains this person is genuinely drawn to',
+    firstQuestion: 'When you lose track of time reading, watching, or arguing about something, what is it usually about?',
+    rubric:
+      'Surface a handful of specific industries, fields, or domains this person is genuinely pulled toward. Get past broad school-subject labels to the actual arenas they keep returning to. You are mapping breadth here, not going deep on any one.',
+  },
+  work: {
+    label: 'kinds of work',
+    surface: 'the kinds of day-to-day work that genuinely absorb this person',
+    firstQuestion: 'Think about work you have done that you would happily do again even unpaid. What were you actually doing, moment to moment?',
+    rubric:
+      'Surface a handful of specific kinds of work or activities that genuinely absorb this person (the actual doing, not the subject or the job title). Map breadth here, not depth on any one.',
+  },
+  places: {
+    label: 'environments',
+    surface: 'the conditions, cultures, and environments where this person does their best work',
+    firstQuestion: 'Think of a time you felt genuinely in your element at work. What was it about that environment that worked for you?',
+    rubric:
+      'Surface a handful of specific conditions, cultures, or environments where this person does their best work (pace, autonomy, team size, trust, structure). Map breadth here, not depth on any one.',
+  },
+};
+
+export function DISCOVER_SYSTEM(lensKey: string): string {
+  const cfg = DISCOVER_LENSES[lensKey] ?? DISCOVER_LENSES.domains;
+  return `PRIMARY GOAL
+${cfg.rubric}
+
+You are a warm, curious interviewer helping someone SURFACE ${cfg.surface}. This is a short, ~4 minute conversation, one question at a time, like a friend who is genuinely interested and keeps things moving. Your job here is BREADTH, not depth: by the end you want a handful (3 to 6) of concrete, specific candidates the person is genuinely drawn to, which they can go deeper on later. Do NOT drill into the root cause of any single one yet, that is a separate, later interview.
+
+${ANTI_GENERIC}
+
+How you interview:
+- Speak in the SECOND PERSON ("you"), warmly and directly.
+- One OPEN question at a time, always answerable in a sentence or two. Never interrogate, never fire multiple questions at once.
+- FOLLOW WHAT LIGHTS THEM UP, then widen. When they name something concrete, acknowledge it and gently ask whether there are others, or nudge toward an adjacent area they have not mentioned. You are collecting several real candidates, not settling on one.
+- PUSH PAST BROAD LABELS to the specific. Not "technology" but "why some products become habits"; not "healthcare" but "how care actually gets delivered". Anchor in a concrete moment when it helps ("what were you actually reading?").
+- Warmth and specificity over polish. No leading, never put a candidate in their mouth.
+- Do not repeat or near-duplicate an already-asked question.
+
+Question types:
+- "open_text": a single open question (options = []). This is your main tool.
+- "choice_then_explain": only when the FORMAT line asks, EXACTLY 3 options for a scene, or EXACTLY 2 for a would-you-rather; the UI invites elaboration after.
+
+Wrapping up:
+- You'll be told whether you MAY wrap up and whether you MUST. Set wrapUp = true once you have a handful of concrete, specific candidates, prefer a few real ones over a long thin list. When told you may not end yet, set wrapUp = false.
+
+Also set: topic (a short tag), isProbe (true if digging into the last answer), reason (a brief internal note, never shown).`;
+}
+
+export function buildDiscoverUser(input: {
+  lens: string;
+  turns: { question: string; answer: string; quality: string }[];
+  priorAsked: string[];
+  questionNumber: number;
+  minQuestions: number;
+  maxQuestions: number;
+  canEnd: boolean;
+  mustEnd: boolean;
+  format?: 'binary' | 'choice' | 'open';
+}): string {
+  const cfg = DISCOVER_LENSES[input.lens] ?? DISCOVER_LENSES.domains;
+  const openLine = `FORMAT REQUIRED: an OPEN question. Set questionType = "open_text" with options = []. Either deepen the specific candidate they just named, or widen into ${cfg.label} they have not mentioned yet. Warm, answerable in a sentence or two.`;
+  const formatLine = input.format === 'binary'
+    ? `FORMAT REQUIRED: a WOULD-YOU-RATHER fork. Set questionType = "choice_then_explain" with EXACTLY 2 options that reveal which of ${cfg.label} pulls harder.`
+    : input.format === 'choice'
+      ? `FORMAT REQUIRED: a 3-OPTION SCENE. Set questionType = "choice_then_explain" with EXACTLY 3 concrete options drawn from ${cfg.label}. If the last answer revealed a lane, offer nearby ones.`
+      : openLine;
+  const transcript = input.turns.length
+    ? input.turns.map((t, i) => `Q${i + 1}: ${t.question}\nA${i + 1} (${t.quality}): ${t.answer}`).join('\n')
+    : '(no questions answered yet, this is the first question)';
+  const priorAsked = [...(input.priorAsked ?? []), ...input.turns.map((t) => t.question)];
+  const askedBlock = priorAsked.length ? priorAsked.map((q) => `  - ${q}`).join('\n') : '  (none yet)';
+  const ending = input.mustEnd
+    ? 'This MUST be the final question, set wrapUp = true.'
+    : input.canEnd
+      ? 'You MAY end after this if you already have a handful of concrete candidates (set wrapUp = true). Otherwise keep going (wrapUp = false).'
+      : 'Do NOT end yet, gather a few more candidates. Set wrapUp = false.';
+  return `Lens: ${cfg.surface}.
+Mission: surface a handful (3 to 6) of concrete, specific candidates the person is drawn to, for them to go deeper on later. Breadth now, depth later.
+Speak to the person as "you".
+
+This interview so far:
+${transcript}
+
+Already asked (do NOT repeat):
+${askedBlock}
+
+You are writing question #${input.questionNumber} (target ${input.minQuestions}-${input.maxQuestions}). ${ending}
+
+${formatLine}
+
+Write the single best next question now.`;
+}
+
+export function DISCOVER_TOPICS_SYSTEM(lensKey: string): string {
+  const cfg = DISCOVER_LENSES[lensKey] ?? DISCOVER_LENSES.domains;
+  return `You read a short discovery interview and extract ${cfg.surface}, as a list of concrete candidates the person can explore deeper later.
+
+${ANTI_GENERIC}
+
+Return 3 to 6 topics, each grounded in what they actually said. Each topic:
+- title: a short, specific, concrete label (2 to 5 words), the real arena, not a broad category. Prefer the specific ("why products become habits") over the generic ("technology") when the transcript supports it, but keep it short enough to be a card title.
+- note: one short plain sentence on what specifically draws them to it, grounded in what they said.
+Do not invent topics the transcript does not support. Fewer real ones beat a padded list.`;
+}
+
+export function buildDiscoverTopicsUser(
+  firstName: string,
+  lens: string,
+  lines: { label: string; value: string }[],
+): string {
+  const body = lines.map((l) => `- ${l.label}: ${l.value}`).join('\n');
+  return `Person's name: ${firstName}
+Their discovery interview:
+${body}
+
+Extract the list of concrete candidates they are drawn to.`;
+}

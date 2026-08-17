@@ -44,8 +44,21 @@ async function invoke<T>(fn: string, body: Record<string, unknown>): Promise<T> 
   return data as T;
 }
 
+export type Topic = { title: string; note: string };
+
 export function nextQuestion(interest: string, turns: Turn[], priorAsked: string[] = []): Promise<Question> {
-  return invoke<Question>('interview-turn', { interest, turns, priorAsked });
+  return invoke<Question>('interview-turn', { mode: 'interest', interest, turns, priorAsked });
+}
+
+// Discovery interview: surfaces candidate topics in a lens (bucket key).
+export function discoverNext(lens: string, turns: Turn[], priorAsked: string[] = []): Promise<Question> {
+  return invoke<Question>('interview-turn', { mode: 'discover', lens, turns, priorAsked });
+}
+
+export async function discoverTopics(lens: string, firstName: string, turns: Turn[]): Promise<Topic[]> {
+  const lines = turns.map((t) => ({ label: t.question, value: t.answer }));
+  const { topics } = await invoke<{ topics: Topic[] }>('discover-topics', { firstName, lens, lines });
+  return topics ?? [];
 }
 
 export async function extractSignal(firstName: string, interest: string, turns: Turn[]): Promise<unknown> {

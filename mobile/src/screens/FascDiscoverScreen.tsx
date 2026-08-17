@@ -5,32 +5,24 @@ import { Screen, T, Button, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
-import { addFascInterview } from '../lib/db';
-import {
-  nextQuestion,
-  extractSignal,
-  synthesizeArtifact,
-  answerQuality,
-  Turn,
-  Question,
-  Artifact,
-} from '../lib/interview';
+import { FASC_BUCKETS } from '../data/content';
+import { discoverNext, discoverTopics, answerQuality, Turn, Question } from '../lib/interview';
 
-const MIN_Q = 6;
-const MAX_Q = 9;
+const MIN_Q = 4;
+const MAX_Q = 6;
 
-type Phase = 'loading' | 'asking' | 'synthesizing' | 'result' | 'error';
+type Phase = 'loading' | 'asking' | 'finding' | 'error';
 
-export default function FascInterviewScreen() {
+export default function FascDiscoverScreen() {
   const { state, patch, go } = useStore();
-  const interest = state.fascSeed;
-  const firstName = 'Noah'; // TODO: pull from the signed-in profile
+  const lens = state.fascBucket;
+  const bucket = FASC_BUCKETS.find((b) => b.key === lens) || FASC_BUCKETS[0];
+  const firstName = 'Noah'; // TODO: from the signed-in profile
 
   const [turns, setTurns] = React.useState<Turn[]>([]);
   const [current, setCurrent] = React.useState<Question | null>(null);
   const [draft, setDraft] = React.useState('');
   const [phase, setPhase] = React.useState<Phase>('loading');
-  const [artifact, setArtifact] = React.useState<Artifact | null>(null);
   const [errorMsg, setErrorMsg] = React.useState('');
   const pending = React.useRef<'question' | 'finish'>('question');
 
@@ -38,14 +30,14 @@ export default function FascInterviewScreen() {
     pending.current = 'question';
     setPhase('loading');
     try {
-      const q = await nextQuestion(interest, []);
+      const q = await discoverNext(lens, []);
       setCurrent(q);
       setPhase('asking');
     } catch {
       setErrorMsg('Could not reach the interviewer. Check your connection and try again.');
       setPhase('error');
     }
-  }, [interest]);
+  }, [lens]);
 
   React.useEffect(() => {
     loadFirst();
@@ -54,18 +46,16 @@ export default function FascInterviewScreen() {
   const finish = React.useCallback(
     async (allTurns: Turn[]) => {
       pending.current = 'finish';
-      setPhase('synthesizing');
+      setPhase('finding');
       try {
-        const signal = await extractSignal(firstName, interest, allTurns);
-        const art = await synthesizeArtifact(firstName, interest, signal);
-        setArtifact(art);
-        setPhase('result');
+        const topics = await discoverTopics(lens, firstName, allTurns);
+        patch({ fascTopics: { ...state.fascTopics, [lens]: topics }, screen: 'fascTopics' });
       } catch {
-        setErrorMsg('Could not shape your artifact. Your answers are safe, tap to try again.');
+        setErrorMsg('Could not pull out your topics. Your answers are safe, tap to try again.');
         setPhase('error');
       }
     },
-    [firstName, interest],
+    [lens, patch, state.fascTopics],
   );
 
   const advance = React.useCallback(
@@ -74,7 +64,7 @@ export default function FascInterviewScreen() {
       setCurrent(null);
       setPhase('loading');
       try {
-        const q = await nextQuestion(interest, allTurns);
+        const q = await discoverNext(lens, allTurns);
         setCurrent(q);
         setPhase('asking');
       } catch {
@@ -82,7 +72,7 @@ export default function FascInterviewScreen() {
         setPhase('error');
       }
     },
-    [interest],
+    [lens],
   );
 
   const submit = () => {
@@ -102,80 +92,20 @@ export default function FascInterviewScreen() {
     else advance(turns);
   };
 
-  const save = () => {
-    if (!artifact) return;
-    addFascInterview({
-      bucket: state.fascBucket,
-      seed: interest,
-      transcript: turns.map((t) => ({ q: t.question, a: t.answer })),
-      result: artifact.one_liner,
-    });
-    const fascDone = state.fascDone.includes(interest) ? state.fascDone : [...state.fascDone, interest];
-    patch({ screen: 'fascTopics', fTurn: 0, fascSeed: '', fascDone });
-  };
-
-  /* ---------------- result ---------------- */
-  if (phase === 'result' && artifact) {
-    return (
-      <Screen contentStyle={styles.wrap}>
-        <BackLink label="Fascinations" onPress={() => go('fascHub')} />
-        <View style={styles.resultBadge}>
-          <Text style={styles.resultBadgeText}>New fascination artifact</Text>
-        </View>
-        <T variant="title" style={styles.h1}>
-          {artifact.title}
-        </T>
-        <T variant="body" style={styles.resultBody}>
-          {artifact.one_liner}
-        </T>
-
-        {artifact.deeper_mechanism ? (
-          <View style={styles.pullsCard}>
-            <Text style={styles.pullsLabel}>Why it pulls you</Text>
-            <Text style={styles.pullsBody}>{artifact.deeper_mechanism}</Text>
-          </View>
-        ) : null}
-
-        {artifact.evidence?.length ? (
-          <>
-            <Text style={styles.evLabel}>What you said</Text>
-            <View style={{ gap: 9, marginTop: 10 }}>
-              {artifact.evidence.map((e, i) => (
-                <Text key={i} style={styles.evItem}>
-                  {e}
-                </Text>
-              ))}
-            </View>
-          </>
-        ) : null}
-
-        <Button title="Save to profile" onPress={save} style={{ marginTop: 24 }} />
-        <Button
-          title="Talk this through"
-          variant="secondary"
-          style={{ marginTop: 10 }}
-          onPress={() => patch({ screen: 'chat', chatDraft: `Help me make sense of my thinking on ${interest}.` })}
-        />
-      </Screen>
-    );
-  }
-
-  /* ---------------- synthesizing ---------------- */
-  if (phase === 'synthesizing') {
+  if (phase === 'finding') {
     return (
       <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
         <ActivityIndicator color={colors.ink} />
         <T variant="heading" style={{ marginTop: 18, textAlign: 'center' }}>
-          Finding what pulls you.
+          Pulling out your topics.
         </T>
         <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
-          Reading back through everything you said.
+          Reading back through what you said.
         </T>
       </Screen>
     );
   }
 
-  /* ---------------- error ---------------- */
   if (phase === 'error') {
     return (
       <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
@@ -184,27 +114,22 @@ export default function FascInterviewScreen() {
           {errorMsg}
         </T>
         <Button title="Try again" onPress={retry} style={{ marginTop: 22, minWidth: 180 }} />
-        <Pressable onPress={() => go('fascHub')} style={{ paddingVertical: 14 }} hitSlop={8}>
-          <Text style={styles.leaveText}>Leave</Text>
+        <Pressable onPress={() => go('fascBucket')} style={{ paddingVertical: 14 }} hitSlop={8}>
+          <Text style={styles.leaveText}>Back</Text>
         </Pressable>
       </Screen>
     );
   }
 
-  /* ---------------- interviewing (asking / loading) ---------------- */
-  const answeredCount = turns.length;
-  const progress = Math.min(answeredCount / MIN_Q, 1);
-
+  const progress = Math.min(turns.length / MIN_Q, 1);
   return (
     <Screen scroll contentStyle={styles.wrap}>
-      <BackLink label="Fascinations" onPress={() => go('fascHub')} />
+      <BackLink label={bucket.title} onPress={() => go('fascBucket')} />
 
       <View style={styles.track}>
         <View style={[styles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
       </View>
-      <Text style={styles.turnLabel}>
-        Question {answeredCount + 1} · about {interest}
-      </Text>
+      <Text style={styles.turnLabel}>Finding your topics · question {turns.length + 1}</Text>
 
       {phase === 'loading' || !current ? (
         <View style={styles.qBubble}>
@@ -230,7 +155,7 @@ export default function FascInterviewScreen() {
         style={styles.answerInput}
       />
       <Button
-        title={current?.wrapUp ? 'See what emerged' : 'Continue'}
+        title={current?.wrapUp ? 'See my topics' : 'Continue'}
         variant="dark"
         disabled={phase !== 'asking' || !draft.trim()}
         onPress={submit}
@@ -240,7 +165,6 @@ export default function FascInterviewScreen() {
   );
 }
 
-// Three pulsing dots shown while the next question is being written.
 function ThinkingDots() {
   const d0 = React.useRef(new Animated.Value(0.3)).current;
   const d1 = React.useRef(new Animated.Value(0.3)).current;
@@ -294,18 +218,5 @@ const styles = StyleSheet.create({
     color: colors.ink,
     textAlignVertical: 'top',
   },
-
   leaveText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
-
-  h1: { marginTop: 16, fontSize: 28 },
-  resultBadge: { alignSelf: 'flex-start', marginTop: 8, backgroundColor: colors.accent, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
-  resultBadgeText: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.accentInk },
-  resultBody: { marginTop: 14, fontSize: 16.5, lineHeight: 24, color: colors.inkSoft },
-
-  pullsCard: { marginTop: 20, padding: 18, borderRadius: radius.lg, backgroundColor: colors.tintLime, borderWidth: 1.5, borderColor: colors.accentDeep },
-  pullsLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
-  pullsBody: { fontFamily: font.medium, fontSize: 15.5, lineHeight: 23, color: '#23231F', marginTop: 9 },
-
-  evLabel: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.muted, marginTop: 24 },
-  evItem: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft, paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.lineStrong },
 });
