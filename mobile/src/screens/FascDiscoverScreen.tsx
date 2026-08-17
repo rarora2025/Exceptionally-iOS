@@ -1,12 +1,24 @@
 import React from 'react';
-import { View, StyleSheet, Text, TextInput, Pressable, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, T, Button, BackLink } from '../ui/kit';
-import { TAB_BAR_SPACE } from '../ui/TabBar';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { T } from '../ui/kit';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
 import { discoverNext, discoverTopics, answerQuality, Turn, Question } from '../lib/interview';
+import * as haptics from '../lib/haptics';
 
 const MIN_Q = 4;
 const MAX_Q = 6;
@@ -17,22 +29,28 @@ export default function FascDiscoverScreen() {
   const { state, patch, go } = useStore();
   const lens = state.fascBucket;
   const bucket = FASC_BUCKETS.find((b) => b.key === lens) || FASC_BUCKETS[0];
-  const firstName = 'Noah'; // TODO: from the signed-in profile
+  const firstName = 'Noah';
 
   const [turns, setTurns] = React.useState<Turn[]>([]);
   const [current, setCurrent] = React.useState<Question | null>(null);
+  const [list, setList] = React.useState<string[]>([]);
   const [draft, setDraft] = React.useState('');
   const [phase, setPhase] = React.useState<Phase>('loading');
   const [errorMsg, setErrorMsg] = React.useState('');
   const pending = React.useRef<'question' | 'finish'>('question');
+  const scrollRef = React.useRef<ScrollView>(null);
+
+  const applyQuestion = (q: Question) => {
+    setCurrent(q);
+    if (q.listSoFar?.length) setList(q.listSoFar);
+    setPhase('asking');
+  };
 
   const loadFirst = React.useCallback(async () => {
     pending.current = 'question';
     setPhase('loading');
     try {
-      const q = await discoverNext(lens, []);
-      setCurrent(q);
-      setPhase('asking');
+      applyQuestion(await discoverNext(lens, []));
     } catch {
       setErrorMsg('Could not reach the interviewer. Check your connection and try again.');
       setPhase('error');
@@ -51,7 +69,7 @@ export default function FascDiscoverScreen() {
         const topics = await discoverTopics(lens, firstName, allTurns);
         patch({ fascTopics: { ...state.fascTopics, [lens]: topics }, screen: 'fascTopics' });
       } catch {
-        setErrorMsg('Could not pull out your topics. Your answers are safe, tap to try again.');
+        setErrorMsg('Could not pull that together. Your answers are safe, tap to try again.');
         setPhase('error');
       }
     },
@@ -64,9 +82,7 @@ export default function FascDiscoverScreen() {
       setCurrent(null);
       setPhase('loading');
       try {
-        const q = await discoverNext(lens, allTurns);
-        setCurrent(q);
-        setPhase('asking');
+        applyQuestion(await discoverNext(lens, allTurns));
       } catch {
         setErrorMsg('Could not load the next question. Tap to try again.');
         setPhase('error');
@@ -78,6 +94,7 @@ export default function FascDiscoverScreen() {
   const submit = () => {
     const a = draft.trim();
     if (!a || !current) return;
+    haptics.tap();
     const turn: Turn = { question: current.questionText, answer: a, quality: answerQuality(a) };
     const allTurns = [...turns, turn];
     setTurns(allTurns);
@@ -94,74 +111,129 @@ export default function FascDiscoverScreen() {
 
   if (phase === 'finding') {
     return (
-      <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
-        <ActivityIndicator color={colors.ink} />
-        <T variant="heading" style={{ marginTop: 18, textAlign: 'center' }}>
-          One sec.
-        </T>
-        <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
-          Reading back through what you said.
-        </T>
-      </Screen>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.ink} />
+          <T variant="heading" style={{ marginTop: 18, textAlign: 'center' }}>
+            One sec.
+          </T>
+          <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
+            Reading back through your list.
+          </T>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (phase === 'error') {
     return (
-      <Screen scroll={false} contentStyle={[styles.wrap, styles.center]}>
-        <Ionicons name="cloud-offline-outline" size={30} color={colors.muted} />
-        <T variant="body" style={{ marginTop: 14, textAlign: 'center', maxWidth: '88%' }}>
-          {errorMsg}
-        </T>
-        <Button title="Try again" onPress={retry} style={{ marginTop: 22, minWidth: 180 }} />
-        <Pressable onPress={() => go('fascBucket')} style={{ paddingVertical: 14 }} hitSlop={8}>
-          <Text style={styles.leaveText}>Back</Text>
-        </Pressable>
-      </Screen>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.center}>
+          <Ionicons name="cloud-offline-outline" size={30} color={colors.muted} />
+          <T variant="body" style={{ marginTop: 14, textAlign: 'center', maxWidth: '82%' }}>
+            {errorMsg}
+          </T>
+          <Pressable onPress={retry} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Try again</Text>
+          </Pressable>
+          <Pressable onPress={() => go('fascBucket')} style={{ paddingVertical: 14 }} hitSlop={8}>
+            <Text style={styles.pause}>Back</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  const progress = Math.min(turns.length / MIN_Q, 1);
   return (
-    <Screen scroll contentStyle={styles.wrap}>
-      <BackLink label={bucket.title} onPress={() => go('fascBucket')} />
-
-      <View style={styles.track}>
-        <View style={[styles.trackFill, { width: `${Math.round(progress * 100)}%` }]} />
-      </View>
-      <Text style={styles.turnLabel}>Question {turns.length + 1}</Text>
-
-      {phase === 'loading' || !current ? (
-        <View style={styles.qBubble}>
-          <View style={styles.dot} />
-          <ThinkingDots />
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        {/* header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => go('fascBucket')} hitSlop={8} style={styles.headerBack}>
+            <Ionicons name="arrow-back" size={20} color={colors.muted} />
+            <Text style={styles.headerTitle}>{bucket.title}</Text>
+          </Pressable>
+          <Pressable onPress={() => go('fascBucket')} hitSlop={8}>
+            <Text style={styles.pause}>Pause</Text>
+          </Pressable>
         </View>
-      ) : (
-        <View style={styles.qBubble}>
-          <View style={styles.dot} />
-          <Text style={styles.qText}>{current.questionText}</Text>
+
+        {/* your list so far */}
+        {list.length ? (
+          <View style={styles.listBlock}>
+            <Text style={styles.listLabel}>Your list so far</Text>
+            <View style={styles.chipWrap}>
+              {list.map((item) => (
+                <View key={item} style={styles.chip}>
+                  <Text style={styles.chipText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* thread */}
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.thread}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+        >
+          {turns.map((t, i) => (
+            <React.Fragment key={i}>
+              <View style={[styles.bubble, styles.ai]}>
+                <Text style={styles.aiText}>{t.question}</Text>
+              </View>
+              <View style={[styles.bubble, styles.me]}>
+                <Text style={styles.meText}>{t.answer}</Text>
+              </View>
+            </React.Fragment>
+          ))}
+
+          {phase === 'loading' || !current ? (
+            <View style={[styles.bubble, styles.ai, styles.typing]}>
+              <ThinkingDots />
+            </View>
+          ) : (
+            <>
+              <View style={[styles.bubble, styles.ai]}>
+                <Text style={styles.aiText}>{current.questionText}</Text>
+              </View>
+              {turns.length === 0 ? (
+                <Text style={styles.helper}>Name as many as come to mind, for any reason.</Text>
+              ) : null}
+            </>
+          )}
+        </ScrollView>
+
+        {/* composer */}
+        <View style={styles.composer}>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            placeholder="Type your answer…"
+            placeholderTextColor={colors.muted}
+            multiline
+            editable={phase === 'asking'}
+            style={styles.input}
+          />
+          <Pressable
+            onPress={submit}
+            disabled={phase !== 'asking' || !draft.trim()}
+            style={[styles.send, { backgroundColor: phase === 'asking' && draft.trim() ? colors.ink : colors.disabled }]}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={20}
+              color={phase === 'asking' && draft.trim() ? colors.onDark : colors.disabledInk}
+            />
+          </Pressable>
         </View>
-      )}
-
-      <View style={{ flex: 1, minHeight: 16 }} />
-
-      <TextInput
-        value={draft}
-        onChangeText={setDraft}
-        placeholder="Answer in a sentence or two…"
-        placeholderTextColor={colors.muted}
-        multiline
-        editable={phase === 'asking'}
-        style={styles.answerInput}
-      />
-      <Button
-        title={current?.wrapUp ? 'See my topics' : 'Continue'}
-        variant="dark"
-        disabled={phase !== 'asking' || !draft.trim()}
-        onPress={submit}
-        style={{ marginTop: 12 }}
-      />
-    </Screen>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -184,7 +256,7 @@ function ThinkingDots() {
     return () => loops.forEach((l) => l.stop());
   }, [d0, d1, d2]);
   return (
-    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', height: 28 }}>
+    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
       {[d0, d1, d2].map((d, i) => (
         <Animated.View key={i} style={[styles.tdot, { opacity: d, transform: [{ scale: d }] }]} />
       ))}
@@ -193,30 +265,63 @@ function ThinkingDots() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
-  center: { alignItems: 'center', justifyContent: 'center' },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
 
-  track: { marginTop: 18, height: 6, borderRadius: 3, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
-  trackFill: { height: '100%', borderRadius: 3, backgroundColor: colors.accent },
-  turnLabel: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 12 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  headerBack: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerTitle: { fontFamily: font.bold, fontSize: 15, color: colors.ink },
+  pause: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 
-  qBubble: { flexDirection: 'row', gap: 12, marginTop: 20, alignItems: 'flex-start' },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent, marginTop: 9 },
-  qText: { flex: 1, fontFamily: font.displaySemi, fontSize: 22, lineHeight: 28, letterSpacing: -0.5, color: colors.ink },
+  listBlock: { paddingHorizontal: 20, paddingBottom: 8 },
+  listLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 9 },
+  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.lineStrong },
+  chipText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
+
+  thread: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 10 },
+  bubble: { maxWidth: '86%', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 20 },
+  ai: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderBottomLeftRadius: 6, ...shadow.soft },
+  me: { alignSelf: 'flex-end', backgroundColor: colors.tintLilac, borderBottomRightRadius: 6 },
+  aiText: { fontFamily: font.medium, fontSize: 15.5, lineHeight: 22, color: colors.ink },
+  meText: { fontFamily: font.semi, fontSize: 15.5, lineHeight: 22, color: colors.ink },
+  helper: { alignSelf: 'flex-start', maxWidth: '86%', fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: colors.muted, marginTop: -2, marginLeft: 4 },
+  typing: { paddingVertical: 16 },
   tdot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted },
 
-  answerInput: {
-    minHeight: 96,
-    backgroundColor: colors.surface,
+  composer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 9,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  input: {
+    flex: 1,
+    minHeight: 48,
+    maxHeight: 130,
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderColor: colors.lineStrong,
-    padding: 15,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 13 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 13 : 8,
     fontFamily: font.medium,
     fontSize: 15.5,
-    lineHeight: 22,
+    lineHeight: 21,
     color: colors.ink,
-    textAlignVertical: 'top',
   },
-  leaveText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
+  send: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+
+  retryBtn: { marginTop: 22, backgroundColor: colors.accent, borderRadius: radius.pill, paddingHorizontal: 30, paddingVertical: 14 },
+  retryText: { fontFamily: font.bold, fontSize: 15, color: colors.accentInk },
 });

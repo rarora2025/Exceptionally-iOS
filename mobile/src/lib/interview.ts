@@ -13,6 +13,7 @@ export type Question = {
   isProbe: boolean;
   wrapUp: boolean;
   reason: string;
+  listSoFar?: string[];
 };
 
 export type Artifact = {

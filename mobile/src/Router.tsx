@@ -30,7 +30,7 @@ import { CLandScreen, CIntroScreen, CInterviewScreen, CReviewScreen, CDoneScreen
 // Screens that show the floating tab bar.
 const TABBED: Screen[] = [
   'home', 'profile', 'tools', 'people', 'artifact',
-  'fascHub', 'fascBucket', 'fascDiscover', 'fascTopics', 'fascSeed', 'fascInterview', 'fascResult', 'toolRun',
+  'fascHub', 'fascBucket', 'fascTopics', 'fascSeed', 'fascResult', 'toolRun',
   'transcript', 'synthesis',
 ];
 

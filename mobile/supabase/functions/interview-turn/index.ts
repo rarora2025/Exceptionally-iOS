@@ -40,6 +40,7 @@ type TurnOut = {
   isProbe: boolean;
   wrapUp: boolean;
   reason: string;
+  listSoFar: string[];
 };
 
 const SCHEMA = obj({
@@ -50,6 +51,7 @@ const SCHEMA = obj({
   isProbe: { type: 'boolean' },
   wrapUp: { type: 'boolean' },
   reason: { type: 'string' },
+  listSoFar: { type: 'array', items: { type: 'string' } },
 });
 
 Deno.serve(async (req) => {
@@ -75,6 +77,7 @@ Deno.serve(async (req) => {
         isProbe: false,
         wrapUp: false,
         reason: 'fixed opener',
+        listSoFar: [],
       });
     }
 
