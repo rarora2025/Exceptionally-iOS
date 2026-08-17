@@ -26,6 +26,7 @@ export type Artifact = {
   why_it_matters: string;
   evidence: string[];
   ask_for_help: string[];
+  deeper_questions?: string[];
 };
 
 // True when the backend is reachable in principle (Supabase configured). The

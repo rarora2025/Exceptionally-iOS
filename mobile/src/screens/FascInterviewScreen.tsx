@@ -111,7 +111,21 @@ export default function FascInterviewScreen() {
       result: artifact.one_liner,
     });
     const fascDone = state.fascDone.includes(interest) ? state.fascDone : [...state.fascDone, interest];
-    patch({ screen: 'fascTopics', fTurn: 0, fascSeed: '', fascDone });
+    const saved = {
+      interest,
+      title: artifact.title,
+      oneLiner: artifact.one_liner,
+      whyItPulls: artifact.deeper_mechanism,
+      evidence: artifact.evidence || [],
+      deeper: artifact.deeper_questions || [],
+    };
+    patch({
+      screen: 'fascTopics',
+      fTurn: 0,
+      fascSeed: '',
+      fascDone,
+      savedArtifacts: { ...state.savedArtifacts, [interest]: saved },
+    });
   };
 
   /* ---------------- result ---------------- */

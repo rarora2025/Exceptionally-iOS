@@ -7,9 +7,36 @@ import { colors, font, radius, shadow } from '../theme';
 import { useStore, initials } from '../state/store';
 import { ARTIFACTS, PULLS } from '../data/content';
 
+type DispArtifact = {
+  lens: string;
+  title: string;
+  synthesis: string;
+  tint: string;
+  author: string;
+  combo?: string;
+  saw?: readonly string[];
+  story?: string;
+  quote?: string;
+  whyItPulls?: string;
+  deeper?: readonly string[];
+  evidence?: readonly string[];
+};
+
 export default function ArtifactScreen() {
   const { state, patch, go } = useStore();
-  const a = ARTIFACTS[state.artifactKey] || ARTIFACTS.david;
+  const gen = state.savedArtifacts[state.artifactKey];
+  const a: DispArtifact = gen
+    ? {
+        lens: 'From your own interview',
+        title: gen.title,
+        synthesis: gen.oneLiner,
+        tint: colors.surfaceSunken,
+        author: 'Noah',
+        whyItPulls: gen.whyItPulls,
+        deeper: gen.deeper,
+        evidence: gen.evidence,
+      }
+    : ARTIFACTS[state.artifactKey] || ARTIFACTS.david;
   const [reaction, setReaction] = React.useState<'up' | 'down' | null>(null);
 
   const back = () => go('profile');
@@ -31,30 +58,40 @@ export default function ArtifactScreen() {
         {a.synthesis}
       </T>
 
-      <View style={styles.comboRow}>
-        <View style={styles.comboPill}>
-          <Text style={styles.comboText}>{a.combo}</Text>
-        </View>
-      </View>
-
-      <T variant="label" style={styles.h}>
-        What they saw
-      </T>
-      <View style={{ gap: 10, marginTop: 12 }}>
-        {a.saw.map((s, i) => (
-          <View key={i} style={styles.sawRow}>
-            <View style={styles.sawDot} />
-            <Text style={styles.sawText}>{s}</Text>
+      {a.combo ? (
+        <View style={styles.comboRow}>
+          <View style={styles.comboPill}>
+            <Text style={styles.comboText}>{a.combo}</Text>
           </View>
-        ))}
-      </View>
+        </View>
+      ) : null}
 
-      <T variant="label" style={styles.h}>
-        The story
-      </T>
-      <T variant="body" style={styles.story}>
-        {a.story}
-      </T>
+      {a.saw?.length ? (
+        <>
+          <T variant="label" style={styles.h}>
+            What they saw
+          </T>
+          <View style={{ gap: 10, marginTop: 12 }}>
+            {a.saw.map((s, i) => (
+              <View key={i} style={styles.sawRow}>
+                <View style={styles.sawDot} />
+                <Text style={styles.sawText}>{s}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {a.story ? (
+        <>
+          <T variant="label" style={styles.h}>
+            The story
+          </T>
+          <T variant="body" style={styles.story}>
+            {a.story}
+          </T>
+        </>
+      ) : null}
 
       {a.whyItPulls ? (
         <View style={styles.pullsCard}>
@@ -65,11 +102,28 @@ export default function ArtifactScreen() {
         </View>
       ) : null}
 
-      <View style={styles.quoteCard}>
-        <Text style={styles.quoteMark}>"</Text>
-        <Text style={styles.quoteText}>{a.quote}</Text>
-        <Text style={styles.quoteAuthor}>— {a.author}</Text>
-      </View>
+      {a.evidence?.length ? (
+        <>
+          <T variant="label" style={styles.h}>
+            What you said
+          </T>
+          <View style={{ gap: 9, marginTop: 12 }}>
+            {a.evidence.map((e, i) => (
+              <Text key={i} style={styles.pull}>
+                {e}
+              </Text>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {a.quote ? (
+        <View style={styles.quoteCard}>
+          <Text style={styles.quoteMark}>"</Text>
+          <Text style={styles.quoteText}>{a.quote}</Text>
+          <Text style={styles.quoteAuthor}>— {a.author}</Text>
+        </View>
+      ) : null}
 
       {a.deeper?.length ? (
         <>

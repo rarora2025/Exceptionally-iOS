@@ -207,7 +207,8 @@ Produce one artifact:
 - shows_up_when: the situations where this pull appears (from the evidence).
 - why_it_matters: why this fascination matters for their direction, specific not generic.
 - evidence: 2-4 concrete specifics they actually said (do NOT fabricate).
-- ask_for_help: the kinds of things people would come to them for on this.`;
+- ask_for_help: the kinds of things people would come to them for on this.
+- deeper_questions: 2-4 open questions that would take THIS person one layer deeper on this, grounded in what they said and phrased to them as "you". Not generic prompts; each should push toward the root, or at a specific unresolved tension they raised.`;
 
 export function buildSynthesizeInterestArtifactUser(
   firstName: string,

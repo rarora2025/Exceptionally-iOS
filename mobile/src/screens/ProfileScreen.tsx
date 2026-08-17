@@ -61,6 +61,22 @@ export default function ProfileScreen() {
           <Text style={styles.viewAll}>View all →</Text>
         </Pressable>
       </View>
+
+      {/* generated from your own interviews */}
+      {Object.values(state.savedArtifacts).length ? (
+        <View style={{ gap: 8, marginTop: 12 }}>
+          {Object.values(state.savedArtifacts).map((s) => (
+            <Pressable key={s.interest} onPress={() => openArtifact(s.interest)} style={styles.strengthCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.strengthTitle}>{s.title}</Text>
+                <Text style={styles.genSource}>From your interview · {s.interest}</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={colors.ink} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       <View style={{ gap: 8, marginTop: 12 }}>
         {SELF_ARTIFACTS.map((a) => {
           const style = state.fascStyle[a.key] || {};
@@ -179,6 +195,7 @@ const styles = StyleSheet.create({
   strengthTitle: { fontFamily: font.displaySemi, fontSize: 18.5, letterSpacing: -0.4, color: colors.ink, lineHeight: 22 },
   strengthSource: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   sourceText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
+  genSource: { fontFamily: font.bold, fontSize: 12, color: colors.muted, marginTop: 8 },
 
   selfCard: {
     flexDirection: 'row',

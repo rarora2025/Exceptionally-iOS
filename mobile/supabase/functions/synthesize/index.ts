@@ -20,6 +20,7 @@ const SCHEMA = obj({
   why_it_matters: { type: 'string' },
   evidence: { type: 'array', items: { type: 'string' } },
   ask_for_help: { type: 'array', items: { type: 'string' } },
+  deeper_questions: { type: 'array', items: { type: 'string' } },
 });
 
 Deno.serve(async (req) => {
