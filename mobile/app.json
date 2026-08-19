@@ -29,7 +29,13 @@
     },
     "plugins": [
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Exceptionally to use the microphone so you can answer interviews by voice."
+        }
+      ]
     ],
     "extra": {
       "eas": {

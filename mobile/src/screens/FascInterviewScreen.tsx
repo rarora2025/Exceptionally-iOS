@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Text, TextInput, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, BackLink } from '../ui/kit';
+import MicButton from '../ui/MicButton';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -238,19 +239,26 @@ export default function FascInterviewScreen() {
       <TextInput
         value={draft}
         onChangeText={setDraft}
-        placeholder="Answer in a sentence or two…"
+        placeholder="Speak or type…"
         placeholderTextColor={colors.muted}
         multiline
         editable={phase === 'asking'}
         style={styles.answerInput}
       />
-      <Button
-        title={current?.wrapUp ? 'See what emerged' : 'Continue'}
-        variant="dark"
-        disabled={phase !== 'asking' || !draft.trim()}
-        onPress={submit}
-        style={{ marginTop: 12 }}
-      />
+      <View style={styles.answerRow}>
+        <MicButton
+          size={52}
+          disabled={phase !== 'asking'}
+          onText={(t) => setDraft((d) => (d.trim() ? d.trim() + ' ' + t : t))}
+        />
+        <Button
+          title={current?.wrapUp ? 'See what emerged' : 'Continue'}
+          variant="dark"
+          disabled={phase !== 'asking' || !draft.trim()}
+          onPress={submit}
+          style={{ flex: 1 }}
+        />
+      </View>
     </Screen>
   );
 }
@@ -309,6 +317,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     textAlignVertical: 'top',
   },
+  answerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
 
   leaveText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 

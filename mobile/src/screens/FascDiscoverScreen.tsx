@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { T } from '../ui/kit';
+import MicButton from '../ui/MicButton';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
@@ -214,11 +215,16 @@ export default function FascDiscoverScreen() {
           <TextInput
             value={draft}
             onChangeText={setDraft}
-            placeholder="Type your answer…"
+            placeholder="Speak or type…"
             placeholderTextColor={colors.muted}
             multiline
             editable={phase === 'asking'}
             style={styles.input}
+          />
+          <MicButton
+            size={48}
+            disabled={phase !== 'asking'}
+            onText={(t) => setDraft((d) => (d.trim() ? d.trim() + ' ' + t : t))}
           />
           <Pressable
             onPress={submit}
