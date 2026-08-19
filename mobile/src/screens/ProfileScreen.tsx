@@ -6,6 +6,7 @@ import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { useAuth } from '../state/auth';
+import * as haptics from '../lib/haptics';
 import { SUPER_STRENGTHS, EMOJI_OPTIONS, COLOR_OPTIONS, FASC_BUCKETS } from '../data/content';
 
 export default function ProfileScreen() {
@@ -13,14 +14,14 @@ export default function ProfileScreen() {
   const { configured, signOut } = useAuth();
   const [pfpOpen, setPfpOpen] = React.useState(false);
 
-  const openArtifact = (key: string) => patch({ screen: 'artifact', artifactKey: key });
-  const openBucket = (key: string) => patch({ screen: 'fascBucket', fascBucket: key, fascFrom: 'profile' });
+  const openArtifact = (key: string) => { haptics.tap(); patch({ screen: 'artifact', artifactKey: key }); };
+  const openBucket = (key: string) => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: key, fascFrom: 'profile' }); };
   const pfpColor = state.pfpColor || colors.accent;
 
   return (
     <Screen contentStyle={styles.wrap}>
       <View style={styles.head}>
-        <Pressable onPress={() => setPfpOpen((o) => !o)}>
+        <Pressable onPress={() => { haptics.select(); setPfpOpen((o) => !o); }}>
           <View style={[styles.pfp, { backgroundColor: pfpColor }]}>
             {state.pfpEmoji ? (
               <Text style={styles.pfpEmoji}>{state.pfpEmoji}</Text>
@@ -37,7 +38,7 @@ export default function ProfileScreen() {
             Noah Reyes
           </T>
         </View>
-        <Pressable onPress={() => go('people')} style={styles.inviteBtn}>
+        <Pressable onPress={() => { haptics.tap(); go('people'); }} style={styles.inviteBtn}>
           <Text style={styles.inviteText}>Invite</Text>
         </Pressable>
       </View>
@@ -54,7 +55,7 @@ export default function ProfileScreen() {
             {EMOJI_OPTIONS.map((e) => (
               <Pressable
                 key={e}
-                onPress={() => patch({ pfpEmoji: e })}
+                onPress={() => { haptics.select(); patch({ pfpEmoji: e }); }}
                 style={[styles.emojiBtn, { borderColor: state.pfpEmoji === e ? colors.ink : colors.line }]}
               >
                 <Text style={{ fontSize: 18 }}>{e}</Text>
@@ -65,7 +66,7 @@ export default function ProfileScreen() {
             {COLOR_OPTIONS.map((c) => (
               <Pressable
                 key={c}
-                onPress={() => patch({ pfpColor: c })}
+                onPress={() => { haptics.select(); patch({ pfpColor: c }); }}
                 style={[styles.colorBtn, { backgroundColor: c, borderColor: pfpColor === c ? colors.ink : colors.line }]}
               />
             ))}
@@ -73,7 +74,7 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
-      <Pressable onPress={() => go('synthesis')} style={styles.buildCard}>
+      <Pressable onPress={() => { haptics.tap(); go('synthesis'); }} style={styles.buildCard}>
         <View style={{ flex: 1 }}>
           <Text style={styles.buildTitle}>Build my narrative</Text>
           <Text style={styles.buildSub}>See your profile come together as one picture</Text>

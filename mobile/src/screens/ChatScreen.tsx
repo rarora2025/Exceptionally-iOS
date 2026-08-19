@@ -213,10 +213,6 @@ export default function ChatScreen() {
               <T variant="heading">
                 What are you working through?
               </T>
-              <T variant="body" style={{ marginTop: 10 }}>
-                Ask about a role, a decision, or how to tell your story. Your coach answers from your real strengths
-                and fascinations.
-              </T>
 
               {pastChats.length ? (
                 <View style={{ marginTop: 26 }}>

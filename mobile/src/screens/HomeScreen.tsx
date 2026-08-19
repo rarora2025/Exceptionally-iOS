@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, TextInput } from 'react-native';
+import { View, StyleSheet, Pressable, Text, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 import { Screen, T, Wordmark } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
+import * as haptics from '../lib/haptics';
 import { COMPOSER_CHIPS, HOME_FASCINATIONS, PROGRESS_CHECKLIST } from '../data/content';
 
 export default function HomeScreen() {
@@ -13,14 +15,38 @@ export default function HomeScreen() {
   const pct = Math.round((PROGRESS_CHECKLIST.filter((p) => p.done).length / PROGRESS_CHECKLIST.length) * 100);
   const nextIdx = PROGRESS_CHECKLIST.findIndex((p) => !p.done && p.route);
 
+  const toggleNotifs = async () => {
+    haptics.tap();
+    if (state.notifsOn) {
+      patch({ notifsOn: false });
+      return;
+    }
+    try {
+      const current = await Notifications.getPermissionsAsync();
+      let granted = current.granted;
+      if (!granted && current.canAskAgain) {
+        const req = await Notifications.requestPermissionsAsync();
+        granted = req.granted;
+      }
+      if (granted) {
+        haptics.success();
+        patch({ notifsOn: true });
+      } else {
+        Alert.alert(
+          'Notifications are off',
+          'Turn them on for Exceptionally in Settings to get reminders and updates.',
+        );
+      }
+    } catch {
+      Alert.alert('Could not enable notifications', 'Please try again.');
+    }
+  };
+
   return (
     <Screen contentStyle={styles.wrap}>
       <View style={styles.header}>
-        <Pressable
-          onPress={() => patch({ notifsOn: !state.notifsOn })}
-          style={[styles.bell, state.notifsOn && styles.bellOn]}
-        >
-          <Ionicons name="notifications" size={18} color={colors.ink} />
+        <Pressable onPress={toggleNotifs} style={[styles.bell, state.notifsOn && styles.bellOn]}>
+          <Ionicons name={state.notifsOn ? 'notifications' : 'notifications-outline'} size={18} color={colors.ink} />
         </Pressable>
       </View>
 
@@ -39,7 +65,7 @@ export default function HomeScreen() {
         />
         <View style={styles.composerFoot}>
           {COMPOSER_CHIPS.map((label) => (
-            <Pressable key={label} onPress={() => patch({ problemDraft: label })} style={styles.chip}>
+            <Pressable key={label} onPress={() => { haptics.select(); patch({ problemDraft: label }); }} style={styles.chip}>
               <Text style={styles.chipText}>{label}</Text>
             </Pressable>
           ))}
@@ -48,6 +74,7 @@ export default function HomeScreen() {
             onPress={() => {
               const t = state.problemDraft.trim();
               if (!t) return;
+              haptics.tap();
               const id = 'c' + Date.now();
               patch({
                 chats: [{ id, title: t.slice(0, 42), messages: [] }, ...state.chats],
@@ -66,7 +93,7 @@ export default function HomeScreen() {
       </View>
 
       {/* My Fascinations */}
-      <Pressable onPress={() => patch({ screen: 'fascHub', fascFrom: 'home' })} style={styles.fascTile}>
+      <Pressable onPress={() => { haptics.tap(); patch({ screen: 'fascHub', fascFrom: 'home' }); }} style={styles.fascTile}>
         <Text style={styles.fascTileText}>My Fascinations</Text>
         <Ionicons name="arrow-forward" size={20} color={colors.accentInk} />
       </Pressable>
@@ -74,7 +101,7 @@ export default function HomeScreen() {
         {HOME_FASCINATIONS.map((f) => (
           <Pressable
             key={f.key}
-            onPress={() => patch({ screen: 'fascBucket', fascBucket: f.key, fascFrom: 'home' })}
+            onPress={() => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: f.key, fascFrom: 'home' }); }}
             style={styles.fascChip}
           >
             <Text style={styles.fascChipText}>{f.title}</Text>
@@ -102,7 +129,7 @@ export default function HomeScreen() {
             return (
               <Row
                 key={p.label}
-                onPress={p.route ? () => patch({ screen: p.route as any, fascFrom: 'home' }) : undefined}
+                onPress={p.route ? () => { haptics.tap(); patch({ screen: p.route as any, fascFrom: 'home' }); } : undefined}
                 style={[styles.checkRow, next && styles.checkRowNext]}
               >
                 <View style={[styles.checkDot, p.done ? styles.checkDotDone : styles.checkDotOff]}>

@@ -239,7 +239,14 @@ export const Field: React.FC<
 /* ----------------------------- Bits ----------------------------- */
 
 export const BackLink: React.FC<{ label?: string; onPress: () => void }> = ({ label = 'Back', onPress }) => (
-  <Pressable onPress={onPress} hitSlop={10} style={styles.back}>
+  <Pressable
+    onPress={() => {
+      haptics.select();
+      onPress();
+    }}
+    hitSlop={10}
+    style={styles.back}
+  >
     <Text style={styles.backText}>{'←  ' + label}</Text>
   </Pressable>
 );

@@ -5,6 +5,7 @@ import { Screen, T, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
+import * as haptics from '../lib/haptics';
 import { FASC_BUCKETS } from '../data/content';
 
 export default function FascHubScreen() {
@@ -28,7 +29,7 @@ export default function FascHubScreen() {
           return (
             <Pressable
               key={b.key}
-              onPress={() => patch({ screen: 'fascBucket', fascBucket: b.key })}
+              onPress={() => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: b.key }); }}
               style={styles.card}
             >
               <View style={[styles.tile, { backgroundColor: b.tint }]}>
