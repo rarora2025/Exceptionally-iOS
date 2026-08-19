@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 import { Screen, T, Avatar } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
@@ -13,6 +14,27 @@ export default function ProfileScreen() {
   const { state, patch, go } = useStore();
   const { configured, signOut } = useAuth();
   const [pfpOpen, setPfpOpen] = React.useState(false);
+
+  const toggleNotifs = async () => {
+    haptics.tap();
+    if (state.notifsOn) {
+      patch({ notifsOn: false });
+      return;
+    }
+    try {
+      const cur = await Notifications.getPermissionsAsync();
+      let granted = cur.granted;
+      if (!granted && cur.canAskAgain) granted = (await Notifications.requestPermissionsAsync()).granted;
+      if (granted) {
+        haptics.success();
+        patch({ notifsOn: true });
+      } else {
+        Alert.alert('Notifications are off', 'Turn them on for Exceptionally in Settings to get reminders and updates.');
+      }
+    } catch {
+      Alert.alert('Could not enable notifications', 'Please try again.');
+    }
+  };
 
   const openArtifact = (key: string) => { haptics.tap(); patch({ screen: 'artifact', artifactKey: key }); };
   const openBucket = (key: string) => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: key, fascFrom: 'profile' }); };
@@ -34,10 +56,13 @@ export default function ProfileScreen() {
           </View>
         </Pressable>
         <View style={{ flex: 1 }}>
-          <T variant="heading" style={{ fontSize: 26 }}>
+          <T variant="heading" numberOfLines={1} style={{ fontSize: 24 }}>
             Noah Reyes
           </T>
         </View>
+        <Pressable onPress={toggleNotifs} hitSlop={6} style={[styles.bell, state.notifsOn && styles.bellOn]}>
+          <Ionicons name={state.notifsOn ? 'notifications' : 'notifications-outline'} size={18} color={colors.ink} />
+        </Pressable>
         <Pressable onPress={() => { haptics.tap(); go('people'); }} style={styles.inviteBtn}>
           <Text style={styles.inviteText}>Invite</Text>
         </Pressable>
@@ -155,7 +180,9 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   wrap: { paddingTop: 16, paddingBottom: TAB_BAR_SPACE },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  bell: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow.soft },
+  bellOn: { backgroundColor: colors.accent },
 
   pfp: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   pfpEmoji: { fontSize: 27 },

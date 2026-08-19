@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text, TextInput, Alert } from 'react-native';
+import { View, StyleSheet, Pressable, Text, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
-import { Screen, T, Wordmark } from '../ui/kit';
+import { Screen, T } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -10,46 +9,28 @@ import * as haptics from '../lib/haptics';
 import { COMPOSER_CHIPS, HOME_FASCINATIONS, PROGRESS_CHECKLIST } from '../data/content';
 
 export default function HomeScreen() {
-  const { state, patch, go } = useStore();
+  const { state, patch } = useStore();
   const hasDraft = !!state.problemDraft.trim();
   const pct = Math.round((PROGRESS_CHECKLIST.filter((p) => p.done).length / PROGRESS_CHECKLIST.length) * 100);
   const nextIdx = PROGRESS_CHECKLIST.findIndex((p) => !p.done && p.route);
 
-  const toggleNotifs = async () => {
+  const send = () => {
+    const t = state.problemDraft.trim();
+    if (!t) return;
     haptics.tap();
-    if (state.notifsOn) {
-      patch({ notifsOn: false });
-      return;
-    }
-    try {
-      const current = await Notifications.getPermissionsAsync();
-      let granted = current.granted;
-      if (!granted && current.canAskAgain) {
-        const req = await Notifications.requestPermissionsAsync();
-        granted = req.granted;
-      }
-      if (granted) {
-        haptics.success();
-        patch({ notifsOn: true });
-      } else {
-        Alert.alert(
-          'Notifications are off',
-          'Turn them on for Exceptionally in Settings to get reminders and updates.',
-        );
-      }
-    } catch {
-      Alert.alert('Could not enable notifications', 'Please try again.');
-    }
+    const id = 'c' + Date.now();
+    patch({
+      chats: [{ id, title: t.slice(0, 42), messages: [] }, ...state.chats],
+      currentChatId: id,
+      chatDraft: t,
+      chatAutoSend: true,
+      problemDraft: '',
+      screen: 'chat',
+    });
   };
 
   return (
-    <Screen contentStyle={styles.wrap}>
-      <View style={styles.header}>
-        <Pressable onPress={toggleNotifs} style={[styles.bell, state.notifsOn && styles.bellOn]}>
-          <Ionicons name={state.notifsOn ? 'notifications' : 'notifications-outline'} size={18} color={colors.ink} />
-        </Pressable>
-      </View>
-
+    <Screen scroll={false} contentStyle={styles.wrap}>
       {/* composer */}
       <View style={[styles.composer, hasDraft && styles.composerActive]}>
         <T variant="cardTitle" style={styles.composerTitle}>
@@ -70,27 +51,13 @@ export default function HomeScreen() {
             </Pressable>
           ))}
           <View style={{ flex: 1 }} />
-          <Pressable
-            onPress={() => {
-              const t = state.problemDraft.trim();
-              if (!t) return;
-              haptics.tap();
-              const id = 'c' + Date.now();
-              patch({
-                chats: [{ id, title: t.slice(0, 42), messages: [] }, ...state.chats],
-                currentChatId: id,
-                chatDraft: t,
-                chatAutoSend: true,
-                problemDraft: '',
-                screen: 'chat',
-              });
-            }}
-            style={[styles.send, { backgroundColor: hasDraft ? colors.ink : colors.surfaceSunken }]}
-          >
+          <Pressable onPress={send} style={[styles.send, { backgroundColor: hasDraft ? colors.ink : colors.surfaceSunken }]}>
             <Ionicons name="arrow-forward" size={18} color={hasDraft ? colors.onDark : colors.muted} />
           </Pressable>
         </View>
       </View>
+
+      <View style={{ flex: 1 }} />
 
       {/* My Fascinations */}
       <Pressable onPress={() => { haptics.tap(); patch({ screen: 'fascHub', fascFrom: 'home' }); }} style={styles.fascTile}>
@@ -109,6 +76,8 @@ export default function HomeScreen() {
         ))}
       </View>
 
+      <View style={{ flex: 1 }} />
+
       {/* checklist */}
       <View style={styles.checklist}>
         <View style={styles.checklistHead}>
@@ -118,11 +87,7 @@ export default function HomeScreen() {
         <View style={styles.track}>
           <View style={[styles.trackFill, { width: `${pct}%` }]} />
         </View>
-        <T variant="meta" style={styles.checklistBlurb}>
-          Two ways to build your profile: interview yourself about what pulls you in, and invite people who know
-          you. The more you add, the sharper it gets.
-        </T>
-        <View style={{ gap: 8, marginTop: 14 }}>
+        <View style={{ gap: 6, marginTop: 14 }}>
           {PROGRESS_CHECKLIST.map((p, i) => {
             const next = !p.done && i === nextIdx;
             const Row = p.route ? Pressable : View;
@@ -151,21 +116,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
-  bell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.soft,
-  },
-  bellOn: { backgroundColor: colors.accent },
+  wrap: { flex: 1, paddingTop: 14, paddingBottom: TAB_BAR_SPACE },
 
   composer: {
-    marginTop: 22,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: 18,
@@ -203,7 +156,6 @@ const styles = StyleSheet.create({
   send: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 
   fascTile: {
-    marginTop: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -225,7 +177,6 @@ const styles = StyleSheet.create({
   fascChipText: { fontFamily: font.bold, fontSize: 13, color: colors.inkSoft },
 
   checklist: {
-    marginTop: 24,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: 18,
@@ -235,7 +186,6 @@ const styles = StyleSheet.create({
   pct: { fontFamily: font.display, fontSize: 22, color: colors.ink, letterSpacing: -0.5 },
   track: { marginTop: 12, height: 10, borderRadius: 10, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
   trackFill: { height: '100%', borderRadius: 10, backgroundColor: colors.accent },
-  checklistBlurb: { marginTop: 11, fontSize: 13.5, lineHeight: 20 },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 8, paddingHorizontal: 10, marginHorizontal: -10, borderRadius: radius.md },
   checkRowNext: { backgroundColor: colors.tintLime },
   checkDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
