@@ -226,8 +226,8 @@ export const FASC_BUCKETS = [
     title: 'Day-to-day work',
     latest: 'Problem solving',
     blurb: 'The kinds of work you love, and the work that drains you.',
-    heading: 'What work pulls you in',
-    intro: 'The kinds of day-to-day work you naturally love, and the work that tends to drain you.',
+    heading: 'The work you naturally love, and hate',
+    intro: "We'll focus on the activities themselves: what gives you energy, what you'd happily keep doing, and what you strongly dislike.",
     prompt: 'What kinds of work do you love doing? Add a few, then pick one to go deep on with an interview.',
     suggestions: ['Solving ambiguous problems', 'Building from scratch', 'Explaining ideas', 'Analyzing data', 'Designing systems', 'Leading people', 'Research', 'Writing', 'Strategy', 'Hands-on making', 'Negotiating', 'Operations'],
     items: [
@@ -267,8 +267,8 @@ export const FASC_BUCKETS = [
     title: 'Work environments',
     latest: 'High-trust environments',
     blurb: 'The cultures where you expand, and the ones where you shrink.',
-    heading: 'Where you love to work',
-    intro: 'The cultures and environments you naturally expand in, and the ones that tend to shrink you.',
+    heading: 'Where you enjoy working',
+    intro: "We'll focus on the cultures themselves: what makes a place enjoyable to be part of, and what makes another one draining.",
     prompt: 'What kind of environment brings out your best? Add a few, then pick one to go deep on with an interview.',
     suggestions: ['High autonomy', 'Fast pace', 'Small teams', 'Deep focus time', 'Lots of collaboration', 'Clear structure', 'High trust', 'Mission-driven', 'Low hierarchy', 'Steady and calm', 'High stakes', 'Public recognition'],
     items: [

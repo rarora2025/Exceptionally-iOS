@@ -30,7 +30,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <Screen scroll={false} contentStyle={styles.wrap}>
+    <Screen contentStyle={styles.wrap}>
       {/* composer */}
       <View style={[styles.composer, hasDraft && styles.composerActive]}>
         <T variant="cardTitle" style={styles.composerTitle}>
@@ -38,7 +38,7 @@ export default function HomeScreen() {
         </T>
         <TextInput
           value={state.problemDraft}
-          onChangeText={(t) => patch({ problemDraft: t })}
+          onChangeText={(t) => { haptics.select(); patch({ problemDraft: t }); }}
           placeholder={state.problemDraft ? '' : 'Should I take the Head of Strategy offer?'}
           placeholderTextColor={colors.muted}
           multiline
@@ -57,8 +57,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={{ flex: 1 }} />
-
       {/* My Fascinations */}
       <Pressable onPress={() => { haptics.tap(); patch({ screen: 'fascHub', fascFrom: 'home' }); }} style={styles.fascTile}>
         <Text style={styles.fascTileText}>My Fascinations</Text>
@@ -75,8 +73,6 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </View>
-
-      <View style={{ flex: 1 }} />
 
       {/* checklist */}
       <View style={styles.checklist}>
@@ -116,7 +112,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, paddingTop: 14, paddingBottom: TAB_BAR_SPACE },
+  wrap: { paddingTop: 10, paddingBottom: TAB_BAR_SPACE },
 
   composer: {
     backgroundColor: colors.surface,
@@ -156,6 +152,7 @@ const styles = StyleSheet.create({
   send: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 
   fascTile: {
+    marginTop: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -177,6 +174,7 @@ const styles = StyleSheet.create({
   fascChipText: { fontFamily: font.bold, fontSize: 13, color: colors.inkSoft },
 
   checklist: {
+    marginTop: 22,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: 18,

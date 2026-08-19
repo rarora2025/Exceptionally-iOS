@@ -246,7 +246,7 @@ export default function ChatScreen() {
         <View style={styles.composer}>
           <TextInput
             value={state.chatDraft}
-            onChangeText={(t) => patch({ chatDraft: t })}
+            onChangeText={(t) => { haptics.select(); patch({ chatDraft: t }); }}
             placeholder="Ask anything"
             placeholderTextColor={colors.muted}
             multiline
