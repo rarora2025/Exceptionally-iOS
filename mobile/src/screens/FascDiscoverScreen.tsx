@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { T } from '../ui/kit';
-import MicButton from '../ui/MicButton';
+import VoiceComposer from '../ui/VoiceComposer';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
@@ -212,31 +212,7 @@ export default function FascDiscoverScreen() {
 
         {/* composer */}
         <View style={styles.composer}>
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="Speak or type…"
-            placeholderTextColor={colors.muted}
-            multiline
-            editable={phase === 'asking'}
-            style={styles.input}
-          />
-          <MicButton
-            size={48}
-            disabled={phase !== 'asking'}
-            onText={(t) => setDraft((d) => (d.trim() ? d.trim() + ' ' + t : t))}
-          />
-          <Pressable
-            onPress={submit}
-            disabled={phase !== 'asking' || !draft.trim()}
-            style={[styles.send, { backgroundColor: phase === 'asking' && draft.trim() ? colors.ink : colors.disabled }]}
-          >
-            <Ionicons
-              name="arrow-up"
-              size={20}
-              color={phase === 'asking' && draft.trim() ? colors.onDark : colors.disabledInk}
-            />
-          </Pressable>
+          <VoiceComposer value={draft} onChangeText={setDraft} onSubmit={submit} disabled={phase !== 'asking'} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -302,14 +278,7 @@ const styles = StyleSheet.create({
   typing: { paddingVertical: 16 },
   tdot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted },
 
-  composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 9,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 6,
-  },
+  composer: { paddingHorizontal: 20 },
   input: {
     flex: 1,
     minHeight: 48,

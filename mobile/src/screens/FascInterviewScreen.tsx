@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Text, TextInput, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, BackLink } from '../ui/kit';
-import MicButton from '../ui/MicButton';
+import VoiceComposer from '../ui/VoiceComposer';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -236,29 +236,12 @@ export default function FascInterviewScreen() {
 
       <View style={{ flex: 1, minHeight: 16 }} />
 
-      <TextInput
+      <VoiceComposer
         value={draft}
         onChangeText={setDraft}
-        placeholder="Speak or type…"
-        placeholderTextColor={colors.muted}
-        multiline
-        editable={phase === 'asking'}
-        style={styles.answerInput}
+        onSubmit={submit}
+        disabled={phase !== 'asking'}
       />
-      <View style={styles.answerRow}>
-        <MicButton
-          size={52}
-          disabled={phase !== 'asking'}
-          onText={(t) => setDraft((d) => (d.trim() ? d.trim() + ' ' + t : t))}
-        />
-        <Button
-          title={current?.wrapUp ? 'See what emerged' : 'Continue'}
-          variant="dark"
-          disabled={phase !== 'asking' || !draft.trim()}
-          onPress={submit}
-          style={{ flex: 1 }}
-        />
-      </View>
     </Screen>
   );
 }
