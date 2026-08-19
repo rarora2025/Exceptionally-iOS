@@ -16,7 +16,6 @@ export default function HomeScreen() {
   return (
     <Screen contentStyle={styles.wrap}>
       <View style={styles.header}>
-        <Wordmark size={20} />
         <Pressable
           onPress={() => patch({ notifsOn: !state.notifsOn })}
           style={[styles.bell, state.notifsOn && styles.bellOn]}
@@ -46,7 +45,19 @@ export default function HomeScreen() {
           ))}
           <View style={{ flex: 1 }} />
           <Pressable
-            onPress={() => go('chat')}
+            onPress={() => {
+              const t = state.problemDraft.trim();
+              if (!t) return;
+              const id = 'c' + Date.now();
+              patch({
+                chats: [{ id, title: t.slice(0, 42), messages: [] }, ...state.chats],
+                currentChatId: id,
+                chatDraft: t,
+                chatAutoSend: true,
+                problemDraft: '',
+                screen: 'chat',
+              });
+            }}
             style={[styles.send, { backgroundColor: hasDraft ? colors.ink : colors.surfaceSunken }]}
           >
             <Ionicons name="arrow-forward" size={18} color={hasDraft ? colors.onDark : colors.muted} />
@@ -114,7 +125,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   wrap: { paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
   bell: {
     width: 40,
     height: 40,

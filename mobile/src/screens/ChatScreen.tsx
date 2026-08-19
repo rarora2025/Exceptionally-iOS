@@ -66,6 +66,8 @@ export default function ChatScreen() {
   const [thinking, setThinking] = React.useState(false);
   const [streaming, setStreaming] = React.useState<string | null>(null);
   const [error, setError] = React.useState('');
+  const [renaming, setRenaming] = React.useState(false);
+  const [renameText, setRenameText] = React.useState('');
 
   const chats = state.chats;
   const current = chats.find((c) => c.id === state.currentChatId) || chats[0];
@@ -98,6 +100,16 @@ export default function ChatScreen() {
     haptics.select();
     patch({ currentChatId: id });
     setError('');
+  };
+
+  const startRename = () => {
+    setRenameText(current.title === 'New chat' ? '' : current.title);
+    setRenaming(true);
+  };
+  const commitRename = () => {
+    const t = renameText.trim();
+    if (t) setCurrent((c) => ({ ...c, title: t }));
+    setRenaming(false);
   };
 
   // Typewriter-reveal the reply into a local streaming bubble, then commit the
@@ -143,6 +155,15 @@ export default function ChatScreen() {
     }
   };
 
+  // Arrived from the Home composer with a message to send — fire it once.
+  React.useEffect(() => {
+    if (state.chatAutoSend && state.chatDraft.trim()) {
+      patch({ chatAutoSend: false });
+      send();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const pastChats = chats.filter((c) => c.id !== current.id && c.messages.length > 0);
   const empty = messages.length === 0 && !busy;
 
@@ -150,10 +171,28 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.header}>
-          <Pressable onPress={() => go('home')} hitSlop={8} style={styles.headerBack}>
-            <Ionicons name="arrow-back" size={20} color={colors.muted} />
-            <Text style={styles.headerTitle}>Home</Text>
+          <Pressable onPress={() => go('home')} hitSlop={8}>
+            <Ionicons name="arrow-back" size={22} color={colors.muted} />
           </Pressable>
+          {renaming ? (
+            <TextInput
+              value={renameText}
+              onChangeText={setRenameText}
+              onSubmitEditing={commitRename}
+              onBlur={commitRename}
+              autoFocus
+              placeholder="Name this chat"
+              placeholderTextColor={colors.muted}
+              style={styles.renameInput}
+            />
+          ) : (
+            <Pressable onPress={startRename} hitSlop={6} style={styles.titleWrap}>
+              <Text style={styles.chatTitle} numberOfLines={1}>
+                {current.title}
+              </Text>
+              <Ionicons name="pencil" size={12} color={colors.muted} />
+            </Pressable>
+          )}
           <Pressable onPress={newChat} hitSlop={8} style={styles.newBtn}>
             <Ionicons name="create-outline" size={17} color={colors.ink} />
             <Text style={styles.newText}>New</Text>
@@ -171,10 +210,7 @@ export default function ChatScreen() {
         >
           {empty ? (
             <View style={styles.emptyState}>
-              <View style={styles.spark}>
-                <Ionicons name="sparkles" size={22} color={colors.accentInk} />
-              </View>
-              <T variant="heading" style={{ marginTop: 16 }}>
+              <T variant="heading">
                 What are you working through?
               </T>
               <T variant="body" style={{ marginTop: 10 }}>
@@ -244,6 +280,9 @@ const styles = StyleSheet.create({
   headerTitle: { fontFamily: font.bold, fontSize: 15, color: colors.muted },
   newBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow.soft },
   newText: { fontFamily: font.bold, fontSize: 13.5, color: colors.ink },
+  titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 8 },
+  chatTitle: { fontFamily: font.bold, fontSize: 15, color: colors.ink, maxWidth: '82%' },
+  renameInput: { flex: 1, marginHorizontal: 8, textAlign: 'center', fontFamily: font.bold, fontSize: 15, color: colors.ink, borderBottomWidth: 1.5, borderBottomColor: colors.accent, paddingVertical: 2 },
 
   list: { paddingHorizontal: 20, paddingVertical: 12, gap: 12, flexGrow: 1 },
   emptyState: { flex: 1, justifyContent: 'center', paddingBottom: 40 },

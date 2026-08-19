@@ -80,6 +80,7 @@ export interface AppState {
   chatLog: { role: 'me' | 'ai'; text: string }[];
   chats: ChatThread[];
   currentChatId: string;
+  chatAutoSend: boolean; // when true, ChatScreen sends the current draft on open
   // profile artifact editing
   fascStyle: Record<string, ArtifactStyle>;
   fascPicker: string | null;
@@ -146,6 +147,7 @@ export const initialState: AppState = {
   chatLog: [],
   chats: [{ id: 'c0', title: 'New chat', messages: [] }],
   currentChatId: 'c0',
+  chatAutoSend: false,
   fascStyle: {},
   fascPicker: null,
   artifactKey: 'david',
