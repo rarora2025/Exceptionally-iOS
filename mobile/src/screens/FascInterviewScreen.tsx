@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TextInput, Pressable, ActivityIndicator, Animat
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, BackLink } from '../ui/kit';
 import VoiceComposer from '../ui/VoiceComposer';
+import * as haptics from '../lib/haptics';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -40,6 +41,7 @@ export default function FascInterviewScreen() {
     setPhase('loading');
     try {
       const q = await nextQuestion(interest, []);
+      haptics.select();
       setCurrent(q);
       setPhase('asking');
     } catch {
@@ -59,6 +61,7 @@ export default function FascInterviewScreen() {
       try {
         const signal = await extractSignal(firstName, interest, allTurns);
         const art = await synthesizeArtifact(firstName, interest, signal);
+        haptics.success();
         setArtifact(art);
         setPhase('result');
       } catch {
@@ -76,6 +79,7 @@ export default function FascInterviewScreen() {
       setPhase('loading');
       try {
         const q = await nextQuestion(interest, allTurns);
+        haptics.select();
         setCurrent(q);
         setPhase('asking');
       } catch {

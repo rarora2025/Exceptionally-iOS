@@ -42,6 +42,7 @@ export default function FascDiscoverScreen() {
   const scrollRef = React.useRef<ScrollView>(null);
 
   const applyQuestion = (q: Question) => {
+    haptics.select(); // interviewer poses a question
     setCurrent(q);
     if (q.listSoFar?.length) setList(q.listSoFar);
     setPhase('asking');
@@ -68,6 +69,7 @@ export default function FascDiscoverScreen() {
       setPhase('finding');
       try {
         const topics = await discoverTopics(lens, firstName, allTurns);
+        haptics.success();
         patch({ fascTopics: { ...state.fascTopics, [lens]: topics }, screen: 'fascTopics' });
       } catch {
         setErrorMsg('Could not pull that together. Your answers are safe, tap to try again.');

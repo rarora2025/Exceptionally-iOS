@@ -95,8 +95,12 @@ export default function VoiceComposer({
       const uri = recorder.uri;
       if (uri) {
         const text = await transcribeAudio(uri);
-        if (text) append(text);
-        else setErr("Didn't catch that. Try again.");
+        if (text) {
+          haptics.success(); // transcript landed
+          append(text);
+        } else {
+          setErr("Didn't catch that. Try again.");
+        }
       }
     } catch {
       setErr('Could not transcribe. Check your connection.');

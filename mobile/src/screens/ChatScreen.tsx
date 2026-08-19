@@ -148,7 +148,10 @@ export default function ChatScreen() {
     try {
       const reply = await sendChat(withUser, grounding);
       setThinking(false);
-      if (reply) reveal(reply, withUser);
+      if (reply) {
+        haptics.tap(); // the coach answered
+        reveal(reply, withUser);
+      }
     } catch {
       setThinking(false);
       setError('Could not reach your coach. Check your connection and try again.');
