@@ -15,7 +15,7 @@ export default function FascBucketScreen() {
   const hasResult = isPulls
     ? (state.fascPulls[bucket.key]?.pulls?.length ?? 0) > 0
     : (state.fascTopics[bucket.key] || []).length > 0;
-  const startInterview = () => patch({ screen: isPulls ? 'fascPulls' : 'fascDiscover' });
+  const startInterview = () => patch({ screen: isPulls ? 'fascPulls' : 'fascDiscover', fascContinue: false });
   const seeResult = () => patch({ screen: isPulls ? 'fascPullsResult' : 'fascTopics' });
 
   return (

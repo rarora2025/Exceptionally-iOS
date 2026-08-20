@@ -104,6 +104,7 @@ export interface AppState {
   fascDone: string[]; // items already taken deeper via the AI interview
   fascTopics: Record<string, { title: string; note: string }[]>; // topics surfaced by the discovery interview, per bucket
   fascPulls: Record<string, PullsSaved>; // day-to-day / environments result, per bucket
+  fascContinue: boolean; // when true, the next interview appends to existing results instead of replacing
   savedArtifacts: Record<string, SavedFasc>; // generated fascination artifacts, keyed by interest
   pfpEmoji: string; // profile picture: chosen emoji ('' = initials)
   pfpColor: string; // profile picture background ('' = default accent)
@@ -170,6 +171,7 @@ export const initialState: AppState = {
   fascDone: [],
   fascTopics: {},
   fascPulls: {},
+  fascContinue: false,
   savedArtifacts: {},
   pfpEmoji: '',
   pfpColor: '',

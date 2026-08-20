@@ -75,7 +75,7 @@ export default function FascTopicsScreen() {
         </Pressable>
       </View>
 
-      <Pressable onPress={() => patch({ screen: 'fascBucket' })} style={styles.retake} hitSlop={8}>
+      <Pressable onPress={() => patch({ screen: 'fascDiscover', fascContinue: true })} style={styles.retake} hitSlop={8}>
         <Ionicons name="arrow-forward" size={14} color={colors.link} />
         <Text style={styles.retakeText}>Continue exploring different industries</Text>
       </Pressable>

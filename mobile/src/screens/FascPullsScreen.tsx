@@ -69,16 +69,26 @@ export default function FascPullsScreen() {
       try {
         const result = await synthesizePulls(lens, firstName, allTurns);
         haptics.success();
+        const prev = state.fascPulls[lens];
+        const merged =
+          state.fascContinue && prev
+            ? {
+                pulls: [...prev.pulls, ...result.pulls.filter((p) => !prev.pulls.some((e) => e.title.toLowerCase() === p.title.toLowerCase()))],
+                dislikes: [...prev.dislikes, ...result.dislikes.filter((d) => !prev.dislikes.some((e) => e.title.toLowerCase() === d.title.toLowerCase()))],
+                saved: false,
+              }
+            : { ...result, saved: false };
         patch({
-          fascPulls: { ...state.fascPulls, [lens]: { ...result, saved: false } },
+          fascPulls: { ...state.fascPulls, [lens]: merged },
           screen: 'fascPullsResult',
+          fascContinue: false,
         });
       } catch {
         setErrorMsg('Could not pull that together. Your answers are safe, tap to try again.');
         setPhase('error');
       }
     },
-    [lens, patch, state.fascPulls],
+    [lens, patch, state.fascPulls, state.fascContinue],
   );
 
   const advance = React.useCallback(

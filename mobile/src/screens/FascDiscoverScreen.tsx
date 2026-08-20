@@ -70,13 +70,17 @@ export default function FascDiscoverScreen() {
       try {
         const topics = await discoverTopics(lens, firstName, allTurns);
         haptics.success();
-        patch({ fascTopics: { ...state.fascTopics, [lens]: topics }, screen: 'fascTopics' });
+        const existing = state.fascTopics[lens] || [];
+        const merged = state.fascContinue
+          ? [...existing, ...topics.filter((t) => !existing.some((e) => e.title.toLowerCase() === t.title.toLowerCase()))]
+          : topics;
+        patch({ fascTopics: { ...state.fascTopics, [lens]: merged }, screen: 'fascTopics', fascContinue: false });
       } catch {
         setErrorMsg('Could not pull that together. Your answers are safe, tap to try again.');
         setPhase('error');
       }
     },
-    [lens, patch, state.fascTopics],
+    [lens, patch, state.fascTopics, state.fascContinue],
   );
 
   const advance = React.useCallback(

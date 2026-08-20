@@ -75,15 +75,6 @@ export default function FascPullsResultScreen() {
               <Text style={styles.cardTitle}>{p.title}</Text>
               <Text style={styles.whyLabel}>Why it pulls you</Text>
               <Text style={styles.whyBody}>{p.why}</Text>
-              {p.love?.length ? (
-                <View style={styles.chips}>
-                  {p.love.map((l) => (
-                    <View key={l} style={styles.chip}>
-                      <Text style={styles.chipText}>{l}</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
               <Pressable onPress={() => explore(p.title)} style={[styles.cta, done && styles.ctaDone]} hitSlop={6}>
                 <Text style={[styles.ctaText, done && { color: colors.accentInk }]}>{done ? 'Revisit' : 'Go deep'}</Text>
                 <Ionicons name="arrow-forward" size={14} color={done ? colors.accentInk : colors.ink} />
@@ -111,7 +102,7 @@ export default function FascPullsResultScreen() {
         <Button title="Save to Fascinations" onPress={save} style={{ marginTop: 26 }} />
       ) : null}
 
-      <Pressable onPress={() => patch({ screen: 'fascBucket' })} style={styles.retake} hitSlop={8}>
+      <Pressable onPress={() => patch({ screen: 'fascPulls', fascContinue: true })} style={styles.retake} hitSlop={8}>
         <Ionicons name="arrow-forward" size={14} color={colors.link} />
         <Text style={styles.retakeText}>{copy.more}</Text>
       </Pressable>
@@ -130,9 +121,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: font.displaySemi, fontSize: 18.5, letterSpacing: -0.3, color: colors.ink },
   whyLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 0.6, textTransform: 'uppercase', color: colors.accentInk, marginTop: 12 },
   whyBody: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft, marginTop: 6 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 },
-  chip: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceSunken },
-  chipText: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
   cta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 15, alignSelf: 'flex-start', paddingHorizontal: 13, paddingVertical: 9, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.lineStrong, backgroundColor: colors.surface },
   ctaDone: { backgroundColor: colors.accent, borderColor: colors.accentDeep },
   ctaText: { fontFamily: font.bold, fontSize: 12.5, color: colors.ink },
