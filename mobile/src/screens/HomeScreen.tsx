@@ -72,7 +72,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   wrap: { paddingTop: 10, paddingBottom: TAB_BAR_SPACE },
-  brand: { marginBottom: 20 },
+  brand: { marginBottom: 20, paddingLeft: 4 },
 
   composer: {
     backgroundColor: colors.surface,

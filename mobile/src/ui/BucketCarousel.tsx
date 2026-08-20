@@ -60,9 +60,9 @@ export default function BucketCarousel() {
                   </View>
                 </View>
 
-                <View style={[styles.mid, !items.length && styles.midEmpty]}>
+                <View style={styles.mid}>
                   {items.length ? (
-                    items.slice(0, 3).map((t) => (
+                    items.slice(0, 2).map((t) => (
                       <View key={t} style={styles.item}>
                         <Text style={styles.itemText} numberOfLines={1}>{t}</Text>
                         <Ionicons name="chevron-forward" size={15} color={colors.muted} />
@@ -71,7 +71,7 @@ export default function BucketCarousel() {
                   ) : (
                     <Text style={styles.emptyText}>{b.intro}</Text>
                   )}
-                  {items.length > 3 ? <Text style={styles.more}>+{items.length - 3} more</Text> : null}
+                  {items.length > 2 ? <Text style={styles.more}>+{items.length - 2} more</Text> : null}
                 </View>
 
                 <View style={[styles.cta, items.length ? styles.ctaOpen : styles.ctaStart]}>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   wrap: { marginTop: 22 },
   card: {
     width: CARD_W,
-    height: 292,
+    height: 250,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
     padding: 20,
@@ -112,8 +112,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: font.displayBold, fontSize: 19, letterSpacing: -0.5, color: colors.ink },
   cardMeta: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 3 },
 
-  mid: { flex: 1, marginTop: 16, gap: 7 },
-  midEmpty: { justifyContent: 'center' },
+  mid: { flex: 1, marginTop: 14, gap: 7 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
   },
   itemText: { flex: 1, fontFamily: font.semi, fontSize: 14.5, color: colors.ink },
   more: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 1, marginLeft: 4 },
-  emptyText: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft },
+  emptyText: { fontFamily: font.medium, fontSize: 14.5, lineHeight: 20, color: colors.inkSoft },
 
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, borderRadius: radius.pill },
   ctaOpen: { backgroundColor: colors.ink },

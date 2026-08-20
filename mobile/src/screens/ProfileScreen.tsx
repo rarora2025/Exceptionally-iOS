@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import { Screen, T, Avatar } from '../ui/kit';
+import { Screen, T, Avatar, Button } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -125,16 +125,15 @@ export default function ProfileScreen() {
       </View>
 
       {configured ? (
-        <Pressable
+        <Button
+          title="Sign out"
+          variant="dark"
+          style={styles.signOutBtn}
           onPress={async () => {
             await signOut();
             go('auth');
           }}
-          style={styles.signOut}
-          hitSlop={8}
-        >
-          <Text style={styles.signOutText}>Sign out</Text>
-        </Pressable>
+        />
       ) : null}
     </Screen>
   );
@@ -215,6 +214,5 @@ const styles = StyleSheet.create({
   strengthSource: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   sourceText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
 
-  signOut: { alignItems: 'center', paddingVertical: 18, marginTop: 20 },
-  signOutText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
+  signOutBtn: { marginTop: 28 },
 });
