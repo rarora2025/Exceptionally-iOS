@@ -6,19 +6,11 @@ import { colors, font, radius } from '../theme';
 import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
 
-// The noun the discovery interview surfaces, per lens.
-const LENS_NOUN: Record<string, string> = {
-  domains: 'the fields and questions you keep coming back to',
-  work: 'the kinds of work that actually absorb you',
-  places: 'the environments where you do your best work',
-};
-
 // Intro / explainer for a lens (invite-flow style). Leads into the discovery
 // interview, or back to already-surfaced topics.
 export default function FascBucketScreen() {
   const { state, patch, go } = useStore();
   const bucket = FASC_BUCKETS.find((b) => b.key === state.fascBucket) || FASC_BUCKETS[0];
-  const noun = LENS_NOUN[bucket.key] || 'what you are drawn to';
   const hasTopics = (state.fascTopics[bucket.key] || []).length > 0;
 
   return (
@@ -35,10 +27,6 @@ export default function FascBucketScreen() {
         <View style={styles.rule} />
         <T variant="body" style={styles.body}>
           {bucket.intro}
-        </T>
-        <T variant="body" style={[styles.body, { marginTop: 12 }]}>
-          A short interview surfaces {noun}. Then you pick which ones to go deep on, and a second interview digs
-          into the real reason underneath each.
         </T>
       </View>
 
