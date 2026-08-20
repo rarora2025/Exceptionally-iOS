@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore, AppState } from '../state/store';
@@ -7,18 +7,13 @@ import { FASC_BUCKETS } from '../data/content';
 import { bucketEntry } from '../lib/fascNav';
 import * as haptics from '../lib/haptics';
 
-// A snap carousel of the three fascination buckets on Home. Each card previews
-// what you have made so far; an empty bucket nudges you to start. The focused
-// card scales up and the neighbours dim as you swipe. Cards size to their
-// content so nothing is clipped and sparse ones don't leave dead space.
+// A paged carousel of the three fascination buckets on Home. One full-width
+// card per page — uniform size, contained inside the page margins (not
+// full-bleed), with the pager dots attached right beneath. Each card previews
+// what you have made; an empty bucket nudges you to start.
 const SCREEN_W = Dimensions.get('window').width;
 const H_PAD = 24; // Screen inner horizontal padding
-const CARD_W = SCREEN_W - H_PAD * 2 - 44;
-const GAP = 14;
-const SNAP = CARD_W + GAP;
-// The scroller is full-bleed (wrap cancels the Screen padding), so cards centre
-// against the whole screen width.
-const SIDE = (SCREEN_W - CARD_W) / 2;
+const CARD_W = SCREEN_W - H_PAD * 2;
 
 const EMPTY: Record<string, string> = {
   domains: 'Discover the industries you keep coming back to.',
@@ -33,7 +28,6 @@ function itemsFor(state: Pick<AppState, 'fascTopics' | 'fascPulls'>, key: string
 
 export default function BucketCarousel() {
   const { state, patch } = useStore();
-  const scrollX = React.useRef(new Animated.Value(0)).current;
   const [active, setActive] = React.useState(0);
 
   const open = (key: string) => {
@@ -43,64 +37,52 @@ export default function BucketCarousel() {
 
   return (
     <View style={styles.wrap}>
-      <Animated.ScrollView
+      <ScrollView
         horizontal
+        pagingEnabled
         showsHorizontalScrollIndicator={false}
-        snapToInterval={SNAP}
-        decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: SIDE, alignItems: 'flex-start' }}
-        scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true })}
-        onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / SNAP))}
+        onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / CARD_W))}
       >
-        {FASC_BUCKETS.map((b, i) => {
+        {FASC_BUCKETS.map((b) => {
           const items = itemsFor(state, b.key);
-          const inputRange = [(i - 1) * SNAP, i * SNAP, (i + 1) * SNAP];
-          const scale = scrollX.interpolate({ inputRange, outputRange: [0.93, 1, 0.93], extrapolate: 'clamp' });
-          const opacity = scrollX.interpolate({ inputRange, outputRange: [0.5, 1, 0.5], extrapolate: 'clamp' });
           return (
-            <Animated.View
-              key={b.key}
-              style={{ width: CARD_W, marginRight: i < FASC_BUCKETS.length - 1 ? GAP : 0, transform: [{ scale }], opacity }}
-            >
+            <View key={b.key} style={{ width: CARD_W }}>
               <View style={styles.card}>
                 <Pressable onPress={() => open(b.key)} style={styles.cardHead}>
                   <View style={[styles.tile, { backgroundColor: b.tint }]}>
                     <Text style={styles.emoji}>{b.emoji}</Text>
                   </View>
-                  <Text style={styles.cardTitle} numberOfLines={1}>{b.title}</Text>
-                  {items.length ? (
-                    <View style={styles.countPill}>
-                      <Text style={styles.countText}>{items.length}</Text>
-                    </View>
-                  ) : null}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle} numberOfLines={1}>{b.title}</Text>
+                    <Text style={styles.cardMeta}>{items.length ? `${items.length} saved` : 'Nothing yet'}</Text>
+                  </View>
                 </Pressable>
 
-                {items.length ? (
-                  <View style={styles.list}>
-                    {items.slice(0, 3).map((t) => (
+                <View style={[styles.mid, !items.length && styles.midEmpty]}>
+                  {items.length ? (
+                    items.slice(0, 3).map((t) => (
                       <Pressable key={t} onPress={() => open(b.key)} style={styles.item}>
                         <Text style={styles.itemText} numberOfLines={1}>{t}</Text>
                         <Ionicons name="chevron-forward" size={15} color={colors.muted} />
                       </Pressable>
-                    ))}
-                    {items.length > 3 ? <Text style={styles.more}>+{items.length - 3} more</Text> : null}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>{EMPTY[b.key]}</Text>
-                )}
+                    ))
+                  ) : (
+                    <Text style={styles.emptyText}>{EMPTY[b.key]}</Text>
+                  )}
+                  {items.length > 3 ? <Text style={styles.more}>+{items.length - 3} more</Text> : null}
+                </View>
 
                 <Pressable onPress={() => open(b.key)} style={[styles.cta, items.length ? styles.ctaOpen : styles.ctaStart]}>
                   <Text style={[styles.ctaText, { color: items.length ? colors.onDark : colors.accentInk }]}>
-                    {items.length ? 'View' : 'Start the interview'}
+                    {items.length ? 'View all' : 'Start the interview'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={14} color={items.length ? colors.onDark : colors.accentInk} />
+                  <Ionicons name="arrow-forward" size={15} color={items.length ? colors.onDark : colors.accentInk} />
                 </Pressable>
               </View>
-            </Animated.View>
+            </View>
           );
         })}
-      </Animated.ScrollView>
+      </ScrollView>
 
       <View style={styles.dots}>
         {FASC_BUCKETS.map((b, i) => (
@@ -112,21 +94,23 @@ export default function BucketCarousel() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: 22, marginHorizontal: -H_PAD },
+  wrap: { marginTop: 22 },
   card: {
+    width: CARD_W,
+    height: 258,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    padding: 16,
+    padding: 20,
     ...shadow.card,
   },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 11 },
-  tile: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 19 },
-  cardTitle: { flex: 1, fontFamily: font.displayBold, fontSize: 18, letterSpacing: -0.5, color: colors.ink },
-  countPill: { minWidth: 26, height: 26, borderRadius: 13, paddingHorizontal: 8, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  countText: { fontFamily: font.bold, fontSize: 13, color: colors.accentInk },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  tile: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: 21 },
+  cardTitle: { fontFamily: font.displayBold, fontSize: 19, letterSpacing: -0.5, color: colors.ink },
+  cardMeta: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 3 },
 
-  list: { marginTop: 14, gap: 7 },
+  mid: { flex: 1, marginTop: 16, gap: 7 },
+  midEmpty: { justifyContent: 'center' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,15 +121,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSunken,
   },
   itemText: { flex: 1, fontFamily: font.semi, fontSize: 14.5, color: colors.ink },
-  more: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 2, marginLeft: 4 },
-  emptyText: { fontFamily: font.medium, fontSize: 14.5, lineHeight: 21, color: colors.inkSoft, marginTop: 14, paddingVertical: 8 },
+  more: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 1, marginLeft: 4 },
+  emptyText: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: colors.inkSoft },
 
-  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: radius.pill, marginTop: 16 },
+  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, borderRadius: radius.pill },
   ctaOpen: { backgroundColor: colors.ink },
   ctaStart: { backgroundColor: colors.accent },
-  ctaText: { fontFamily: font.bold, fontSize: 13.5 },
+  ctaText: { fontFamily: font.bold, fontSize: 14 },
 
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 16 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 14 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lineStrong },
   dotOn: { width: 18, backgroundColor: colors.accentDeep },
 });

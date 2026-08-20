@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, TextInput, Pressable } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
@@ -34,18 +34,33 @@ export default function FascTopicsScreen() {
     patch({ screen: 'fascInterview', fascSeed: title, fTurn: 0, fTranscript: '' });
   };
 
+  const removeTopic = (title: string) => {
+    Alert.alert('Remove this?', `"${title}" will be removed from your industries.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          haptics.warn();
+          setTopics(topics.filter((t) => t.title !== title));
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen contentStyle={styles.wrap}>
       <BackLink label="Fascinations" onPress={() => go('fascHub')} />
       <T variant="title" style={styles.h1}>
         {topics.length ? 'My Industries' : bucket.heading}
       </T>
+      {topics.length ? <Text style={styles.hint}>Tap to go deep · press and hold to remove</Text> : null}
 
-      <View style={{ gap: 10, marginTop: 22 }}>
+      <View style={{ gap: 10, marginTop: 16 }}>
         {topics.map((t) => {
           const done = state.fascDone.includes(t.title);
           return (
-            <Pressable key={t.title} onPress={() => goDeeper(t.title)} style={styles.card}>
+            <Pressable key={t.title} onPress={() => goDeeper(t.title)} onLongPress={() => removeTopic(t.title)} style={styles.card}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{t.title}</Text>
               </View>
@@ -87,6 +102,7 @@ const styles = StyleSheet.create({
   wrap: { paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
   h1: { marginTop: 16, fontSize: 28 },
   sub: { marginTop: 12, fontSize: 15.5, lineHeight: 22 },
+  hint: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 10 },
 
   card: {
     flexDirection: 'row',

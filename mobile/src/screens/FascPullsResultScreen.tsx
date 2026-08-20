@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, T, Button, BackLink } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
@@ -56,6 +56,34 @@ export default function FascPullsResultScreen() {
     patch({ screen: 'fascInterview', fascSeed: title, fTurn: 0, fTranscript: '' });
   };
 
+  const removePull = (title: string) => {
+    Alert.alert('Remove this?', `"${title}" will be removed.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          haptics.warn();
+          patch({ fascPulls: { ...state.fascPulls, [lens]: { ...data, pulls: pulls.filter((p) => p.title !== title) } } });
+        },
+      },
+    ]);
+  };
+
+  const removeDislike = (title: string) => {
+    Alert.alert('Remove this?', `"${title}" will be removed.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          haptics.warn();
+          patch({ fascPulls: { ...state.fascPulls, [lens]: { ...data, dislikes: dislikes.filter((d) => d.title !== title) } } });
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen contentStyle={styles.wrap}>
       <BackLink label="Fascinations" onPress={() => go('fascHub')} />
@@ -65,12 +93,13 @@ export default function FascPullsResultScreen() {
       <T variant="body" style={styles.sub}>
         {copy.sub}
       </T>
+      {pulls.length ? <Text style={styles.hint}>Tap to go deep · press and hold to remove</Text> : null}
 
-      <View style={{ gap: 12, marginTop: 20 }}>
+      <View style={{ gap: 12, marginTop: 16 }}>
         {pulls.map((p) => {
           const done = state.fascDone.includes(p.title);
           return (
-            <View key={p.title} style={styles.card}>
+            <Pressable key={p.title} onLongPress={() => removePull(p.title)} style={styles.card}>
               <Text style={styles.cardTitle}>{p.title}</Text>
               <Text style={styles.whyLabel}>Why it pulls you</Text>
               <Text style={styles.whyBody}>{p.why}</Text>
@@ -78,7 +107,7 @@ export default function FascPullsResultScreen() {
                 <Text style={[styles.ctaText, done && { color: colors.accentInk }]}>{done ? 'Revisit' : 'Go deep'}</Text>
                 <Ionicons name="arrow-forward" size={14} color={done ? colors.accentInk : colors.ink} />
               </Pressable>
-            </View>
+            </Pressable>
           );
         })}
       </View>
@@ -88,10 +117,10 @@ export default function FascPullsResultScreen() {
           <Text style={[styles.section, { marginTop: 26 }]}>{copy.drains}</Text>
           <View style={{ gap: 10, marginTop: 12 }}>
             {dislikes.map((d) => (
-              <View key={d.title} style={styles.dislikeCard}>
+              <Pressable key={d.title} onLongPress={() => removeDislike(d.title)} style={styles.dislikeCard}>
                 <Text style={styles.dislikeTitle}>{d.title}</Text>
                 <Text style={styles.dislikeNote}>{d.note}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </>
@@ -113,6 +142,7 @@ const styles = StyleSheet.create({
   wrap: { paddingTop: 12, paddingBottom: TAB_BAR_SPACE },
   h1: { marginTop: 16, fontSize: 28 },
   sub: { marginTop: 12, fontSize: 15.5, lineHeight: 22, color: colors.inkSoft },
+  hint: { fontFamily: font.bold, fontSize: 12.5, color: colors.muted, marginTop: 12 },
 
   section: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.muted, marginTop: 26 },
 
