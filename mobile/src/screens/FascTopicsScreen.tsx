@@ -38,7 +38,7 @@ export default function FascTopicsScreen() {
     <Screen contentStyle={styles.wrap}>
       <BackLink label="Fascinations" onPress={() => go('fascHub')} />
       <T variant="title" style={styles.h1}>
-        {topics.length ? 'What came up' : bucket.heading}
+        {topics.length ? 'My Industries' : bucket.heading}
       </T>
 
       <View style={{ gap: 10, marginTop: 22 }}>
@@ -76,8 +76,8 @@ export default function FascTopicsScreen() {
       </View>
 
       <Pressable onPress={() => patch({ screen: 'fascBucket' })} style={styles.retake} hitSlop={8}>
-        <Ionicons name="refresh" size={14} color={colors.link} />
-        <Text style={styles.retakeText}>Redo the discovery interview</Text>
+        <Ionicons name="arrow-forward" size={14} color={colors.link} />
+        <Text style={styles.retakeText}>Continue exploring different industries</Text>
       </Pressable>
     </Screen>
   );

@@ -8,18 +8,20 @@ import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
 import * as haptics from '../lib/haptics';
 
-const COPY: Record<string, { title: string; sub: string; loves: string; drains: string }> = {
+const COPY: Record<string, { title: string; sub: string; loves: string; drains: string; more: string }> = {
   work: {
     title: 'What work pulls you',
     sub: 'The kinds of day-to-day work you naturally love — and the work you want less of.',
     loves: 'Work you love',
     drains: 'Work that drains you',
+    more: 'Continue exploring different kinds of work',
   },
   places: {
     title: 'Where you enjoy working',
     sub: 'The cultures that make work feel rewarding — and the ones you would rather avoid.',
     loves: 'Cultures you enjoy',
     drains: 'Cultures that drain you',
+    more: 'Continue exploring different work environments',
   },
 };
 
@@ -64,35 +66,31 @@ export default function FascPullsResultScreen() {
         {copy.sub}
       </T>
 
-      {!saved ? (
-        <View style={styles.confirm}>
-          <Ionicons name="sparkles" size={15} color={colors.accentInk} />
-          <Text style={styles.confirmText}>Does this capture it? Save it, or run it again below.</Text>
-        </View>
-      ) : null}
-
       {pulls.length ? <Text style={styles.section}>{copy.loves}</Text> : null}
       <View style={{ gap: 12, marginTop: 12 }}>
-        {pulls.map((p) => (
-          <View key={p.title} style={styles.card}>
-            <Text style={styles.cardTitle}>{p.title}</Text>
-            <Text style={styles.whyLabel}>Why it pulls you</Text>
-            <Text style={styles.whyBody}>{p.why}</Text>
-            {p.love?.length ? (
-              <View style={styles.chips}>
-                {p.love.map((l) => (
-                  <View key={l} style={styles.chip}>
-                    <Text style={styles.chipText}>{l}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-            <Pressable onPress={() => explore(p.title)} style={styles.explore} hitSlop={6}>
-              <Text style={styles.exploreText}>Explore this more</Text>
-              <Ionicons name="arrow-forward" size={13} color={colors.link} />
-            </Pressable>
-          </View>
-        ))}
+        {pulls.map((p) => {
+          const done = state.fascDone.includes(p.title);
+          return (
+            <View key={p.title} style={styles.card}>
+              <Text style={styles.cardTitle}>{p.title}</Text>
+              <Text style={styles.whyLabel}>Why it pulls you</Text>
+              <Text style={styles.whyBody}>{p.why}</Text>
+              {p.love?.length ? (
+                <View style={styles.chips}>
+                  {p.love.map((l) => (
+                    <View key={l} style={styles.chip}>
+                      <Text style={styles.chipText}>{l}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <Pressable onPress={() => explore(p.title)} style={[styles.cta, done && styles.ctaDone]} hitSlop={6}>
+                <Text style={[styles.ctaText, done && { color: colors.accentInk }]}>{done ? 'Revisit' : 'Go deep'}</Text>
+                <Ionicons name="arrow-forward" size={14} color={done ? colors.accentInk : colors.ink} />
+              </Pressable>
+            </View>
+          );
+        })}
       </View>
 
       {dislikes.length ? (
@@ -114,8 +112,8 @@ export default function FascPullsResultScreen() {
       ) : null}
 
       <Pressable onPress={() => patch({ screen: 'fascBucket' })} style={styles.retake} hitSlop={8}>
-        <Ionicons name="refresh" size={14} color={colors.link} />
-        <Text style={styles.retakeText}>Redo the interview</Text>
+        <Ionicons name="arrow-forward" size={14} color={colors.link} />
+        <Text style={styles.retakeText}>{copy.more}</Text>
       </Pressable>
     </Screen>
   );
@@ -126,19 +124,6 @@ const styles = StyleSheet.create({
   h1: { marginTop: 16, fontSize: 28 },
   sub: { marginTop: 12, fontSize: 15.5, lineHeight: 22, color: colors.inkSoft },
 
-  confirm: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginTop: 18,
-    padding: 13,
-    borderRadius: radius.md,
-    backgroundColor: colors.tintLime,
-    borderWidth: 1.5,
-    borderColor: colors.accentDeep,
-  },
-  confirmText: { flex: 1, fontFamily: font.semi, fontSize: 13.5, lineHeight: 19, color: colors.accentInk },
-
   section: { fontFamily: font.bold, fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.muted, marginTop: 26 },
 
   card: { padding: 17, borderRadius: radius.lg, backgroundColor: colors.surface, ...shadow.card },
@@ -148,8 +133,9 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 },
   chip: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceSunken },
   chipText: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
-  explore: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 14, alignSelf: 'flex-start' },
-  exploreText: { fontFamily: font.bold, fontSize: 13, color: colors.link },
+  cta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 15, alignSelf: 'flex-start', paddingHorizontal: 13, paddingVertical: 9, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.lineStrong, backgroundColor: colors.surface },
+  ctaDone: { backgroundColor: colors.accent, borderColor: colors.accentDeep },
+  ctaText: { fontFamily: font.bold, fontSize: 12.5, color: colors.ink },
 
   dislikeCard: { padding: 15, borderRadius: radius.lg, backgroundColor: colors.surfaceSunken },
   dislikeTitle: { fontFamily: font.displaySemi, fontSize: 16, letterSpacing: -0.2, color: colors.ink },
