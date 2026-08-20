@@ -66,8 +66,7 @@ export default function FascPullsResultScreen() {
         {copy.sub}
       </T>
 
-      {pulls.length ? <Text style={styles.section}>{copy.loves}</Text> : null}
-      <View style={{ gap: 12, marginTop: 12 }}>
+      <View style={{ gap: 12, marginTop: 20 }}>
         {pulls.map((p) => {
           const done = state.fascDone.includes(p.title);
           return (

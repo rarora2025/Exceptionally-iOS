@@ -6,14 +6,12 @@ import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import * as haptics from '../lib/haptics';
-import { COMPOSER_CHIPS, HOME_FASCINATIONS, PROGRESS_CHECKLIST } from '../data/content';
-import { bucketEntry } from '../lib/fascNav';
+import { COMPOSER_CHIPS } from '../data/content';
+import BucketCarousel from '../ui/BucketCarousel';
 
 export default function HomeScreen() {
   const { state, patch } = useStore();
   const hasDraft = !!state.problemDraft.trim();
-  const pct = Math.round((PROGRESS_CHECKLIST.filter((p) => p.done).length / PROGRESS_CHECKLIST.length) * 100);
-  const nextIdx = PROGRESS_CHECKLIST.findIndex((p) => !p.done && p.route);
 
   const send = () => {
     const t = state.problemDraft.trim();
@@ -63,51 +61,7 @@ export default function HomeScreen() {
         <Text style={styles.fascTileText}>My Fascinations</Text>
         <Ionicons name="arrow-forward" size={20} color={colors.accentInk} />
       </Pressable>
-      <View style={styles.fascChips}>
-        {HOME_FASCINATIONS.map((f) => (
-          <Pressable
-            key={f.key}
-            onPress={() => { haptics.tap(); patch({ screen: bucketEntry(state, f.key), fascBucket: f.key, fascFrom: 'home' }); }}
-            style={styles.fascChip}
-          >
-            <Text style={styles.fascChipText}>{f.title}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* checklist */}
-      <View style={styles.checklist}>
-        <View style={styles.checklistHead}>
-          <T variant="label">Checklist</T>
-          <Text style={styles.pct}>{pct}%</Text>
-        </View>
-        <View style={styles.track}>
-          <View style={[styles.trackFill, { width: `${pct}%` }]} />
-        </View>
-        <View style={{ gap: 6, marginTop: 14 }}>
-          {PROGRESS_CHECKLIST.map((p, i) => {
-            const next = !p.done && i === nextIdx;
-            const Row = p.route ? Pressable : View;
-            return (
-              <Row
-                key={p.label}
-                onPress={p.route ? () => { haptics.tap(); patch({ screen: p.route as any, fascFrom: 'home' }); } : undefined}
-                style={[styles.checkRow, next && styles.checkRowNext]}
-              >
-                <View style={[styles.checkDot, p.done ? styles.checkDotDone : styles.checkDotOff]}>
-                  {p.done ? <Text style={styles.checkMark}>✓</Text> : null}
-                </View>
-                <Text style={[styles.checkLabel, { color: p.done ? colors.ink : colors.inkSoft }]}>{p.label}</Text>
-                {p.route && !p.done ? (
-                  <Ionicons name="arrow-forward" size={15} color={next ? colors.accentInk : colors.muted} />
-                ) : (
-                  <Text style={styles.checkMeta}>{p.meta}</Text>
-                )}
-              </Row>
-            );
-          })}
-        </View>
-      </View>
+      <BucketCarousel />
     </Screen>
   );
 }
@@ -163,34 +117,4 @@ const styles = StyleSheet.create({
     ...shadow.accent,
   },
   fascTileText: { fontFamily: font.displayBold, fontSize: 20, letterSpacing: -0.5, color: colors.accentInk },
-  fascChips: { flexDirection: 'row', gap: 7, marginTop: 10 },
-  fascChip: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 11,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    ...shadow.soft,
-  },
-  fascChipText: { fontFamily: font.bold, fontSize: 13, color: colors.inkSoft },
-
-  checklist: {
-    marginTop: 22,
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: 18,
-    ...shadow.card,
-  },
-  checklistHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  pct: { fontFamily: font.display, fontSize: 22, color: colors.ink, letterSpacing: -0.5 },
-  track: { marginTop: 12, height: 10, borderRadius: 10, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
-  trackFill: { height: '100%', borderRadius: 10, backgroundColor: colors.accent },
-  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 8, paddingHorizontal: 10, marginHorizontal: -10, borderRadius: radius.md },
-  checkRowNext: { backgroundColor: colors.tintLime },
-  checkDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  checkDotDone: { backgroundColor: colors.accent },
-  checkDotOff: { borderWidth: 2, borderColor: colors.lineStrong },
-  checkMark: { fontFamily: font.bold, fontSize: 11, color: colors.accentInk },
-  checkLabel: { flex: 1, fontFamily: font.semi, fontSize: 14.5 },
-  checkMeta: { fontFamily: font.bold, fontSize: 13, color: colors.muted },
 });

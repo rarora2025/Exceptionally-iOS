@@ -8,8 +8,7 @@ import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { useAuth } from '../state/auth';
 import * as haptics from '../lib/haptics';
-import { SUPER_STRENGTHS, EMOJI_OPTIONS, COLOR_OPTIONS, FASC_BUCKETS } from '../data/content';
-import { bucketEntry } from '../lib/fascNav';
+import { SUPER_STRENGTHS, EMOJI_OPTIONS, COLOR_OPTIONS } from '../data/content';
 
 export default function ProfileScreen() {
   const { state, patch, go } = useStore();
@@ -38,7 +37,6 @@ export default function ProfileScreen() {
   };
 
   const openArtifact = (key: string) => { haptics.tap(); patch({ screen: 'artifact', artifactKey: key }); };
-  const openBucket = (key: string) => { haptics.tap(); patch({ screen: bucketEntry(state, key), fascBucket: key, fascFrom: 'profile' }); };
   const pfpColor = state.pfpColor || colors.accent;
 
   return (
@@ -124,43 +122,6 @@ export default function ProfileScreen() {
             <Ionicons name="arrow-forward" size={16} color={colors.ink} />
           </Pressable>
         ))}
-      </View>
-
-      {/* Fascinations, grouped by lens */}
-      <T variant="label" style={styles.section}>
-        Fascinations
-      </T>
-      <View style={{ gap: 14, marginTop: 12 }}>
-        {FASC_BUCKETS.map((b) => {
-          const arts = Object.values(state.savedArtifacts).filter((a) => a.lens === b.key);
-          return (
-            <View key={b.key}>
-              <Pressable onPress={() => openBucket(b.key)} style={styles.bucketHead}>
-                <View style={[styles.bucketTile, { backgroundColor: b.tint }]}>
-                  <Text style={styles.bucketEmoji}>{b.emoji}</Text>
-                </View>
-                <Text style={styles.bucketTitle}>{b.title}</Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.muted} />
-              </Pressable>
-              {arts.length ? (
-                <View style={{ gap: 7, marginTop: 8 }}>
-                  {arts.map((a) => (
-                    <Pressable key={a.interest} onPress={() => openArtifact(a.interest)} style={styles.fascItem}>
-                      <Text style={styles.fascItemTitle} numberOfLines={2}>
-                        {a.title}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={16} color={colors.ink} />
-                    </Pressable>
-                  ))}
-                </View>
-              ) : (
-                <Pressable onPress={() => openBucket(b.key)} style={styles.bucketEmpty}>
-                  <Text style={styles.bucketEmptyText}>Nothing yet. Tap to run the interview.</Text>
-                </Pressable>
-              )}
-            </View>
-          );
-        })}
       </View>
 
       {configured ? (
@@ -253,25 +214,6 @@ const styles = StyleSheet.create({
   strengthTitle: { fontFamily: font.displaySemi, fontSize: 18.5, letterSpacing: -0.4, color: colors.ink, lineHeight: 22 },
   strengthSource: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   sourceText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
-
-  bucketHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  bucketTile: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  bucketEmoji: { fontSize: 16 },
-  bucketTitle: { flex: 1, fontFamily: font.displayBold, fontSize: 17, letterSpacing: -0.4, color: colors.ink },
-
-  fascItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginLeft: 46,
-    padding: 14,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    ...shadow.soft,
-  },
-  fascItemTitle: { flex: 1, fontFamily: font.semi, fontSize: 15, lineHeight: 20, color: colors.ink },
-  bucketEmpty: { marginLeft: 46, marginTop: 8, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
-  bucketEmptyText: { fontFamily: font.medium, fontSize: 13.5, color: colors.muted },
 
   signOut: { alignItems: 'center', paddingVertical: 18, marginTop: 20 },
   signOutText: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
