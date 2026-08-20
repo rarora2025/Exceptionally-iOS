@@ -180,7 +180,7 @@ export const FASC_BUCKETS = [
     title: 'Industries & questions',
     latest: 'Technology',
     blurb: 'The domains and questions you keep coming back to.',
-    heading: 'What keeps pulling you back',
+    heading: 'The worlds on your list',
     intro: "Start with the industries, fields, and subjects you're interested in or seriously considering. Then we'll understand why each one is on your list.",
     prompt: 'Which industries or domains are you drawn to? Add a few, then pick one to go deep on with an interview.',
     suggestions: ['Technology', 'Healthcare', 'Finance', 'Climate', 'Education', 'Media', 'Consumer', 'Biotech', 'Gaming', 'Policy', 'Sports', 'Real estate'],
