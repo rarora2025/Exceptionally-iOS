@@ -75,7 +75,9 @@ export default function FascPullsScreen() {
             ? {
                 pulls: [...prev.pulls, ...result.pulls.filter((p) => !prev.pulls.some((e) => e.title.toLowerCase() === p.title.toLowerCase()))],
                 dislikes: [...prev.dislikes, ...result.dislikes.filter((d) => !prev.dislikes.some((e) => e.title.toLowerCase() === d.title.toLowerCase()))],
-                saved: false,
+                // Keep the prior save state: if this bucket was already saved,
+                // appending new ones shouldn't re-prompt to save everything.
+                saved: prev.saved,
               }
             : { ...result, saved: false };
         patch({
