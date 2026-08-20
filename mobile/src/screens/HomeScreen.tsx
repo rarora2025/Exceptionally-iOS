@@ -66,7 +66,7 @@ export default function HomeScreen() {
         {HOME_FASCINATIONS.map((f) => (
           <Pressable
             key={f.key}
-            onPress={() => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: f.key, fascFrom: 'home' }); }}
+            onPress={() => { haptics.tap(); patch({ screen: state.fascTopics[f.key]?.length ? 'fascTopics' : 'fascBucket', fascBucket: f.key, fascFrom: 'home' }); }}
             style={styles.fascChip}
           >
             <Text style={styles.fascChipText}>{f.title}</Text>

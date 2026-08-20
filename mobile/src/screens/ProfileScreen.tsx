@@ -37,7 +37,7 @@ export default function ProfileScreen() {
   };
 
   const openArtifact = (key: string) => { haptics.tap(); patch({ screen: 'artifact', artifactKey: key }); };
-  const openBucket = (key: string) => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: key, fascFrom: 'profile' }); };
+  const openBucket = (key: string) => { haptics.tap(); patch({ screen: state.fascTopics[key]?.length ? 'fascTopics' : 'fascBucket', fascBucket: key, fascFrom: 'profile' }); };
   const pfpColor = state.pfpColor || colors.accent;
 
   return (

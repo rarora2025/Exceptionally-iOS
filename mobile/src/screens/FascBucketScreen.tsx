@@ -45,12 +45,12 @@ export default function FascBucketScreen() {
 
       {hasTopics ? (
         <>
-          <Button title="See your topics" variant="primary" onPress={() => go('fascTopics')} />
+          <Button title="Start over" variant="dark" onPress={() => patch({ screen: 'fascDiscover' })} />
           <Button
-            title="Start over"
+            title="See your topics"
             variant="secondary"
             style={{ marginTop: 10 }}
-            onPress={() => patch({ screen: 'fascDiscover' })}
+            onPress={() => go('fascTopics')}
           />
         </>
       ) : (

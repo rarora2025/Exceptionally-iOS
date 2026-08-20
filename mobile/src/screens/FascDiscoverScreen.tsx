@@ -21,8 +21,8 @@ import { FASC_BUCKETS } from '../data/content';
 import { discoverNext, discoverTopics, answerQuality, Turn, Question } from '../lib/interview';
 import * as haptics from '../lib/haptics';
 
-const MIN_Q = 4;
-const MAX_Q = 6;
+const MIN_Q = 3;
+const MAX_Q = 5;
 
 type Phase = 'loading' | 'asking' | 'finding' | 'error';
 
@@ -164,7 +164,15 @@ export default function FascDiscoverScreen() {
         {/* your list so far */}
         {list.length ? (
           <View style={styles.listBlock}>
-            <Text style={styles.listLabel}>Your list so far</Text>
+            <View style={styles.listHead}>
+              <Text style={styles.listLabel}>Your list so far</Text>
+              {list.length >= 2 ? (
+                <Pressable onPress={() => finish(turns)} style={styles.saveBtn} hitSlop={8}>
+                  <Text style={styles.saveText}>Save these</Text>
+                  <Ionicons name="arrow-forward" size={13} color={colors.accentInk} />
+                </Pressable>
+              ) : null}
+            </View>
             <View style={styles.chipWrap}>
               {list.map((item) => (
                 <View key={item} style={styles.chip}>
@@ -265,7 +273,10 @@ const styles = StyleSheet.create({
   pause: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 
   listBlock: { paddingHorizontal: 20, paddingBottom: 8 },
+  listHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   listLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.accent, ...shadow.soft },
+  saveText: { fontFamily: font.bold, fontSize: 12, color: colors.accentInk },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 9 },
   chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.lineStrong },
   chipText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },

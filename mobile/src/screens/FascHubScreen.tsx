@@ -29,7 +29,7 @@ export default function FascHubScreen() {
           return (
             <Pressable
               key={b.key}
-              onPress={() => { haptics.tap(); patch({ screen: 'fascBucket', fascBucket: b.key }); }}
+              onPress={() => { haptics.tap(); patch({ screen: topics.length ? 'fascTopics' : 'fascBucket', fascBucket: b.key }); }}
               style={styles.card}
             >
               <View style={[styles.tile, { backgroundColor: b.tint }]}>

@@ -40,18 +40,14 @@ export default function FascTopicsScreen() {
       <T variant="title" style={styles.h1}>
         {topics.length ? 'What came up' : bucket.heading}
       </T>
-      <T variant="body" style={styles.sub}>
-        From your interview. Pick one to go deep on, and the next interview finds the real reason underneath it.
-      </T>
 
-      <View style={{ gap: 10, marginTop: 20 }}>
+      <View style={{ gap: 10, marginTop: 22 }}>
         {topics.map((t) => {
           const done = state.fascDone.includes(t.title);
           return (
             <Pressable key={t.title} onPress={() => goDeeper(t.title)} style={styles.card}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{t.title}</Text>
-                {t.note ? <Text style={styles.cardNote}>{t.note}</Text> : null}
               </View>
               <View style={[styles.cta, done && styles.ctaDone]}>
                 <Text style={[styles.ctaText, done && { color: colors.accentInk }]}>
@@ -79,7 +75,7 @@ export default function FascTopicsScreen() {
         </Pressable>
       </View>
 
-      <Pressable onPress={() => patch({ screen: 'fascDiscover' })} style={styles.retake} hitSlop={8}>
+      <Pressable onPress={() => patch({ screen: 'fascBucket' })} style={styles.retake} hitSlop={8}>
         <Ionicons name="refresh" size={14} color={colors.link} />
         <Text style={styles.retakeText}>Redo the discovery interview</Text>
       </Pressable>
