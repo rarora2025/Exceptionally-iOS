@@ -27,8 +27,9 @@ export default function FascBucketScreen() {
           <Text style={styles.emoji}>{bucket.emoji}</Text>
         </View>
         <T variant="title" style={styles.h1}>
-          {bucket.heading}
+          {bucket.title}
         </T>
+        <Text style={styles.subtitle}>{bucket.heading}</Text>
         <View style={styles.rule} />
         <T variant="body" style={styles.body}>
           {bucket.intro}
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
   tile: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 26 },
   h1: { marginTop: 18, fontSize: 30 },
+  subtitle: { fontFamily: font.semi, fontSize: 15.5, color: colors.muted, marginTop: 8 },
   rule: { width: 46, height: 3, backgroundColor: colors.ink, marginTop: 20, borderRadius: 2 },
   body: { marginTop: 18, fontSize: 16, lineHeight: 24 },
 

@@ -13,13 +13,11 @@ import * as haptics from '../lib/haptics';
 // what you have made; an empty bucket nudges you to start.
 const SCREEN_W = Dimensions.get('window').width;
 const H_PAD = 24; // Screen inner horizontal padding
-const CARD_W = SCREEN_W - H_PAD * 2;
-
-const EMPTY: Record<string, string> = {
-  domains: 'Discover the industries you keep coming back to.',
-  work: 'Find the day-to-day work that gives you real energy.',
-  places: 'Name the cultures where you do your best work.',
-};
+// A little narrower than the frame so the next card peeks — that strip is the
+// grab area that makes the row obviously swipeable.
+const CARD_W = SCREEN_W - H_PAD * 2 - 34;
+const GAP = 12;
+const SNAP = CARD_W + GAP;
 
 function itemsFor(state: Pick<AppState, 'fascTopics' | 'fascPulls'>, key: string): string[] {
   if (key === 'domains') return (state.fascTopics[key] || []).map((t) => t.title);
@@ -39,14 +37,17 @@ export default function BucketCarousel() {
     <View style={styles.wrap}>
       <ScrollView
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / CARD_W))}
+        snapToInterval={SNAP}
+        decelerationRate="fast"
+        directionalLockEnabled
+        contentContainerStyle={{ paddingRight: 34 }}
+        onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / SNAP))}
       >
-        {FASC_BUCKETS.map((b) => {
+        {FASC_BUCKETS.map((b, i) => {
           const items = itemsFor(state, b.key);
           return (
-            <View key={b.key} style={{ width: CARD_W }}>
+            <View key={b.key} style={{ width: CARD_W, marginRight: i < FASC_BUCKETS.length - 1 ? GAP : 0 }}>
               <View style={styles.card}>
                 <Pressable onPress={() => open(b.key)} style={styles.cardHead}>
                   <View style={[styles.tile, { backgroundColor: b.tint }]}>
@@ -67,7 +68,7 @@ export default function BucketCarousel() {
                       </Pressable>
                     ))
                   ) : (
-                    <Text style={styles.emptyText}>{EMPTY[b.key]}</Text>
+                    <Text style={styles.emptyText}>{b.intro}</Text>
                   )}
                   {items.length > 3 ? <Text style={styles.more}>+{items.length - 3} more</Text> : null}
                 </View>
@@ -97,10 +98,11 @@ const styles = StyleSheet.create({
   wrap: { marginTop: 22 },
   card: {
     width: CARD_W,
-    height: 258,
+    height: 292,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
     padding: 20,
+    overflow: 'hidden',
     ...shadow.card,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
