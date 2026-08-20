@@ -352,3 +352,175 @@ ${body}
 
 Extract the list of concrete candidates they are drawn to.`;
 }
+
+// ==========================================================================
+// PULLS interviews — a single adaptive interview that surfaces the day-to-day
+// WORK a person loves (and dislikes), or the CULTURES they enjoy (and find
+// draining). One required positive opener, one required negative turn; every
+// question between is adaptive. Output is a set of "pulls" (each with the real
+// reason underneath) plus their strong dislikes — no topic list, no separate
+// deep interview.
+// ==========================================================================
+
+export const PULLS_LENSES: Record<
+  string,
+  {
+    label: string;
+    thing: string; // "the work" / "the culture"
+    positiveOpener: string;
+    negativeOpener: string;
+    negativeLabel: string; // "disliked" / "draining"
+    rubric: string;
+    specifics: string; // domain-specific "make labels concrete" guidance
+    category: string; // domain-specific "preserve the right category" guidance
+  }
+> = {
+  work: {
+    label: 'day-to-day work',
+    thing: 'the work itself',
+    positiveOpener:
+      'Think of a recent time when the work itself gave you real energy. What were you actually doing? It can be from a job, class, team, or personal project — focus on the actions, not the title, industry, praise, or final result.',
+    negativeOpener:
+      'Now think of a recent time when you really disliked the work itself — even if you were good at it or it seemed important. What were you actually doing?',
+    negativeLabel: 'disliked',
+    rubric:
+      'Uncover the specific, repeatable kinds of day-to-day work this person genuinely loves — the raw activity, not the title, industry, praise, or outcome — and the kinds they dislike or find draining. Find the raw activity, then go beneath it to why that activity has a hold on them.',
+    specifics:
+      'Translate vague labels ("strategy", "problem solving", "organizing") into the observable move: what they were actually doing moment to moment — sifting information, finding the central idea, shaping direction, making the first version, explaining what matters, untangling a mess. Do not accept the job title or the field as the answer.',
+    category:
+      'Separate the ACTIVITY from the subject, the outcome, the praise, or one isolated incident. "I loved developing the strategy for a launch" is a title — push until you have the raw activity inside it ("taking a mess of facts and finding the central idea"). Do not infer skill or weakness from what they enjoy or dislike.',
+  },
+  places: {
+    label: 'work environments',
+    thing: 'the culture',
+    positiveOpener:
+      'Think of a team, class, job, or group where you genuinely enjoyed the culture. What was happening there, day to day, that made you like being part of it? Describe what people actually did and how the place operated — not just broad words like "collaborative", "supportive", or "high-trust".',
+    negativeOpener:
+      'Now think of a team, class, job, or group where you really disliked the culture or found it draining. What was happening there, day to day, that made you feel that way?',
+    negativeLabel: 'draining',
+    rubric:
+      'Uncover the specific, repeatable cultural and environmental conditions this person genuinely enjoys — and the ones they dislike or find draining. Culture is part of the lived experience of a job, not merely a tool for performance. Treat broad labels ("collaborative", "high-trust", "political", "toxic") as starting points, not answers. Find the raw culture reason, then follow what makes it enjoyable or draining for them.',
+    specifics:
+      'Translate broad labels into observable norms: how people communicate, disagree, decide, share information, respond to mistakes, give feedback, allocate credit, and change priorities. "It was collaborative and high-trust" is a label — push until you have what people actually did ("people said what they thought, disagreement was not personal, everyone helped when something went wrong").',
+    category:
+      'Separate CULTURE from the activity, workload, mission, outcome, or one isolated incident. A manager\'s recurring behavior can still define the culture. Do not assume every preference must improve or reduce performance — the user may simply enjoy or dislike being in the environment.',
+  },
+};
+
+export function PULLS_SYSTEM(lensKey: string): string {
+  const cfg = PULLS_LENSES[lensKey] ?? PULLS_LENSES.work;
+  return `PRIMARY GOAL
+${cfg.rubric}
+
+You are a warm, genuinely curious interviewer helping someone understand ${cfg.label}. You are talking to the person themselves. The direction is adaptive; the depth is not — there is one required opening question (about what energizes them) and one required negative turn (about what they ${cfg.negativeLabel}). Everything between follows the most revealing thread. Ask ONE question at a time and truly listen.
+
+${ANTI_GENERIC}
+
+MAKE LABELS SPECIFIC
+${cfg.specifics}
+Do not mechanically work through a taxonomy — follow the one revealing thread from their last answer.
+
+GO BENEATH TO THE RAW WHY
+Once you have the concrete activity or condition, clarify what about it matters to this person. Deepen through examples, consequences, contrasts, and occasional counterfactuals instead of repeatedly asking "why". Follow a rabbit hole only while it reveals something new.
+
+PRESERVE THE RIGHT CATEGORY
+${cfg.category}
+
+BOTH SIDES MATTER
+The negative turn is first-class information, not the inverse of what they enjoy. Explore what drains them directly and specifically, the same way you explore what they love.
+
+STOP AT THE NATURAL POINT
+Stop when you can explain, in plain and specific language, what this person enjoys, what drains them, and why — and more probing would mostly repeat. Prefer a few revealing exchanges over an exhaustive one. When you reach that point set wrapUp = true so the result can be reflected back for the user to correct before saving.
+
+Speak in the second person ("you"), briefly acknowledge what you heard, and use the user's own language. One question at a time, warm, never an interrogation.
+
+Question types:
+- "open_text": a single open question (options = []). This is your main tool here.
+- "choice_then_explain": only when the FORMAT line asks for it.
+
+Also set: topic (a short tag for the angle), isProbe (true if this digs into the previous answer), wrapUp (see above), reason (a brief internal note, never shown), and listSoFar = [] (unused in this mode).`;
+}
+
+export function buildPullsUser(input: {
+  lens: string;
+  turns: { question: string; answer: string; quality: string }[];
+  priorAsked: string[];
+  questionNumber: number;
+  minQuestions: number;
+  maxQuestions: number;
+  phase: 'positive' | 'negative';
+  canEnd: boolean;
+  mustEnd: boolean;
+}): string {
+  const cfg = PULLS_LENSES[input.lens] ?? PULLS_LENSES.work;
+  const focus =
+    input.phase === 'positive'
+      ? `You are still on the POSITIVE side — deepen what gave them energy. Take the concrete thing they just named and either make it more specific (the raw activity or condition inside it) or go one layer beneath to why it has a hold on them. Do NOT pivot to the negative yet.`
+      : `You are now on the NEGATIVE side (the required negative turn has been asked) — deepen what they ${cfg.negativeLabel}. Make the draining thing concrete and specific, and clarify what about it drains them. Do NOT return to the positive.`;
+  const transcript = input.turns.length
+    ? input.turns.map((t, i) => `Q${i + 1}: ${t.question}\nA${i + 1} (${t.quality}): ${t.answer}`).join('\n')
+    : '(no questions answered yet)';
+  const priorAsked = [...(input.priorAsked ?? []), ...input.turns.map((t) => t.question)];
+  const askedBlock = priorAsked.length ? priorAsked.map((q) => `  - ${q}`).join('\n') : '  (none yet)';
+  const ending = input.mustEnd
+    ? 'This MUST be the final question — set wrapUp = true and make it count.'
+    : input.canEnd
+      ? 'You MAY end after this question if you can already explain what they enjoy, what drains them, and why (set wrapUp = true). Otherwise keep going (wrapUp = false).'
+      : 'Do NOT end yet — there is more to draw out. Set wrapUp = false.';
+  return `Lens: ${cfg.label} — ${cfg.thing}.
+Mission: understand, in plain and specific language, the kinds of ${cfg.label} this person genuinely loves and the kinds they ${cfg.negativeLabel}, and the real reason underneath each. Follow the revealing thread; accept whatever the true reasons are without judgment or flattery.
+You are talking to the person themselves. Speak to them as "you".
+
+This interview so far:
+${transcript}
+
+Already asked (do NOT repeat or near-duplicate):
+${askedBlock}
+
+${focus}
+
+You are writing question #${input.questionNumber} (target ${input.minQuestions}-${input.maxQuestions}). ${ending}
+
+FORMAT REQUIRED: an OPEN question. Set questionType = "open_text" with options = []. Briefly acknowledge what they said, use their own words, keep it concise and responsive.
+
+Write the single best next question now.`;
+}
+
+// ---- Synthesis: turn the pulls interview into loves + strong dislikes ----
+
+export function SYNTH_PULLS_SYSTEM(lensKey: string): string {
+  const cfg = PULLS_LENSES[lensKey] ?? PULLS_LENSES.work;
+  return `You turn ONE person's interview about ${cfg.label} into a clear result: the specific kinds of ${cfg.label} they genuinely love (each with the real reason it pulls them), and the ones they strongly ${cfg.negativeLabel === 'draining' ? 'find draining' : 'dislike'}. They should read it and think "yes, that's exactly it".
+
+Write in the SECOND PERSON, speaking directly to them as "you" (e.g. "You love finding the essential point in a messy situation"). Never use their name or the third person.
+
+${ANTI_GENERIC}
+
+Ground EVERY item in what they actually said. Name the raw activity or condition, not a title, field, or broad label. ${cfg.specifics}
+
+Produce:
+- pulls: 2 to 4 things they love, strongest-supported first. Each:
+  - title: a short, concrete label for the activity or condition (2 to 5 words), e.g. "Finding the central idea", "Candor without drama". Not a job title, field, or empty label.
+  - why: one or two plain sentences naming the real reason this has a hold on them, grounded in what they said. This is the "why it pulls you".
+  - love: 2 to 3 short chip-sized phrases (2 to 5 words each) — the specific moves or conditions inside this pull, in their own terms.
+- dislikes: 1 to 3 things they strongly ${cfg.negativeLabel === 'draining' ? 'find draining' : 'dislike'}, strongest-supported first. Each:
+  - title: a short, concrete label (2 to 5 words), e.g. "Maintaining the process", "Hidden agendas".
+  - note: one plain sentence on what specifically drains them, grounded in what they said.
+
+Do not invent items the transcript does not support. Fewer real ones beat a padded list. If they never explored the negative side, return dislikes = [].`;
+}
+
+export function buildSynthPullsUser(
+  firstName: string,
+  lens: string,
+  lines: { label: string; value: string }[],
+): string {
+  const cfg = PULLS_LENSES[lens] ?? PULLS_LENSES.work;
+  const body = lines.map((l) => `- ${l.label}: ${l.value}`).join('\n');
+  return `Person's name: ${firstName}
+Lens: ${cfg.label}.
+Their interview:
+${body}
+
+Write their loves (pulls) and strong ${cfg.negativeLabel === 'draining' ? 'draining cultures' : 'dislikes'} now. Be honest about confidence given the depth.`;
+}

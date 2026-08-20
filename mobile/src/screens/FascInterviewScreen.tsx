@@ -126,7 +126,7 @@ export default function FascInterviewScreen() {
       deeper: artifact.deeper_questions || [],
     };
     patch({
-      screen: 'fascTopics',
+      screen: state.fascBucket === 'domains' ? 'fascTopics' : 'fascPullsResult',
       fTurn: 0,
       fascSeed: '',
       fascDone,

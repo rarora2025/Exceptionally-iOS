@@ -177,7 +177,7 @@ export const FASC_BUCKETS = [
     key: 'domains',
     emoji: '🔍',
     tint: colors.accent,
-    title: 'Industries & questions',
+    title: 'Industries',
     latest: 'Technology',
     blurb: 'The domains and questions you keep coming back to.',
     heading: 'The worlds on your list',

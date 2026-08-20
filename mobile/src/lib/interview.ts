@@ -63,6 +63,22 @@ export async function discoverTopics(lens: string, firstName: string, turns: Tur
   return topics ?? [];
 }
 
+// ---- Pulls interview (day-to-day work / work environments) ----
+export type Pull = { title: string; why: string; love: string[] };
+export type Dislike = { title: string; note: string };
+export type PullsResult = { pulls: Pull[]; dislikes: Dislike[] };
+
+// One adaptive interview: required positive opener + required negative turn.
+export function pullsNext(lens: string, turns: Turn[], priorAsked: string[] = []): Promise<Question> {
+  return invoke<Question>('interview-turn', { mode: 'pulls', lens, turns, priorAsked });
+}
+
+export async function synthesizePulls(lens: string, firstName: string, turns: Turn[]): Promise<PullsResult> {
+  const lines = turns.map((t) => ({ label: t.question, value: t.answer }));
+  const out = await invoke<PullsResult>('synthesize-pulls', { firstName, lens, lines });
+  return { pulls: out.pulls ?? [], dislikes: out.dislikes ?? [] };
+}
+
 export async function extractSignal(firstName: string, interest: string, turns: Turn[]): Promise<unknown> {
   const lines = turns.map((t) => ({ label: t.question, value: t.answer }));
   const { signal } = await invoke<{ signal: unknown }>('extract', { firstName, interest, lines });

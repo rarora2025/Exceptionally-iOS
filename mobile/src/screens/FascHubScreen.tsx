@@ -7,6 +7,7 @@ import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import * as haptics from '../lib/haptics';
 import { FASC_BUCKETS } from '../data/content';
+import { bucketEntry } from '../lib/fascNav';
 
 export default function FascHubScreen() {
   const { state, patch, go } = useStore();
@@ -23,13 +24,20 @@ export default function FascHubScreen() {
       <View style={{ gap: 10, marginTop: 22 }}>
         {FASC_BUCKETS.map((b) => {
           const topics = state.fascTopics[b.key] || [];
+          const pulls = state.fascPulls[b.key]?.pulls || [];
           const done = topics.filter((t) => state.fascDone.includes(t.title)).length;
           const meta =
-            topics.length === 0 ? 'Tap to start' : `${topics.length} found${done ? ` · ${done} explored` : ''}`;
+            b.key === 'domains'
+              ? topics.length === 0
+                ? 'Tap to start'
+                : `${topics.length} found${done ? ` · ${done} explored` : ''}`
+              : pulls.length === 0
+                ? 'Tap to start'
+                : `${pulls.length} found`;
           return (
             <Pressable
               key={b.key}
-              onPress={() => { haptics.tap(); patch({ screen: topics.length ? 'fascTopics' : 'fascBucket', fascBucket: b.key }); }}
+              onPress={() => { haptics.tap(); patch({ screen: bucketEntry(state, b.key), fascBucket: b.key }); }}
               style={styles.card}
             >
               <View style={[styles.tile, { backgroundColor: b.tint }]}>

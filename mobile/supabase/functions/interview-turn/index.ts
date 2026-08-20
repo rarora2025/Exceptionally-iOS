@@ -20,10 +20,16 @@ import {
   DISCOVER_SYSTEM,
   buildDiscoverUser,
   DISCOVER_LENSES,
+  PULLS_SYSTEM,
+  buildPullsUser,
+  PULLS_LENSES,
 } from '../_shared/prompts.ts';
 
 // Deeper interest interview runs longer; discovery is short (breadth).
-const RANGE = { interest: { min: 6, max: 9 }, discover: { min: 4, max: 6 } };
+// pulls: one required opener + one required negative turn, adaptive between.
+const RANGE = { interest: { min: 6, max: 9 }, discover: { min: 4, max: 6 }, pulls: { min: 5, max: 6 } };
+// In pulls mode, question #NEG_AT is the fixed negative-turn opener.
+const NEG_AT = 4;
 
 function planFormat(n: number): 'open' | 'choice' | 'binary' {
   if (n === 1) return 'open';
@@ -60,15 +66,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { mode = 'interest', interest, lens = 'domains', turns = [], priorAsked = [] } = body;
     const discover = mode === 'discover';
+    const pulls = mode === 'pulls';
     const answered = Array.isArray(turns) ? turns.length : 0;
     const questionNumber = answered + 1;
-    const { min, max } = discover ? RANGE.discover : RANGE.interest;
+    const { min, max } = pulls ? RANGE.pulls : discover ? RANGE.discover : RANGE.interest;
 
-    // First question is fixed, verbatim copy — no model call.
+    // Fixed, verbatim questions — no model call. Q1 is the opener for every
+    // mode; in pulls mode Q#NEG_AT is the required negative-turn opener.
     if (questionNumber === 1) {
-      const first = discover
-        ? (DISCOVER_LENSES[lens] ?? DISCOVER_LENSES.domains).firstQuestion
-        : fillInterviewTokens(INTERVIEW_TYPES.interest.firstQuestion, { subject: interest });
+      const first = pulls
+        ? (PULLS_LENSES[lens] ?? PULLS_LENSES.work).positiveOpener
+        : discover
+          ? (DISCOVER_LENSES[lens] ?? DISCOVER_LENSES.domains).firstQuestion
+          : fillInterviewTokens(INTERVIEW_TYPES.interest.firstQuestion, { subject: interest });
       return json({
         questionText: first,
         questionType: 'open_text',
@@ -80,15 +90,29 @@ Deno.serve(async (req) => {
         listSoFar: [],
       });
     }
+    if (pulls && questionNumber === NEG_AT) {
+      return json({
+        questionText: (PULLS_LENSES[lens] ?? PULLS_LENSES.work).negativeOpener,
+        questionType: 'open_text',
+        options: [],
+        topic: 'negative-turn',
+        isProbe: false,
+        wrapUp: false,
+        reason: 'required negative turn',
+        listSoFar: [],
+      });
+    }
 
     const canEnd = questionNumber > min;
     const mustEnd = questionNumber >= max;
     const format = planFormat(questionNumber);
 
-    const system = discover ? DISCOVER_SYSTEM(lens) : INTERVIEW_SYSTEM_INTEREST;
-    const user = discover
-      ? buildDiscoverUser({ lens, turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format })
-      : buildInterviewInterestUser({ interest: interest || 'this interest', turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format });
+    const system = pulls ? PULLS_SYSTEM(lens) : discover ? DISCOVER_SYSTEM(lens) : INTERVIEW_SYSTEM_INTEREST;
+    const user = pulls
+      ? buildPullsUser({ lens, turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, phase: questionNumber > NEG_AT ? 'negative' : 'positive', canEnd, mustEnd })
+      : discover
+        ? buildDiscoverUser({ lens, turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format })
+        : buildInterviewInterestUser({ interest: interest || 'this interest', turns, priorAsked, questionNumber, minQuestions: min, maxQuestions: max, canEnd, mustEnd, format });
 
     const out = await structured<TurnOut>(system, user, 'interview_turn', SCHEMA, 0.9);
     return json(out);

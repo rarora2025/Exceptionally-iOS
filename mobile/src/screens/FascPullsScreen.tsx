@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Text,
-  TextInput,
   Pressable,
   ScrollView,
   ActivityIndicator,
@@ -18,41 +17,40 @@ import VoiceComposer from '../ui/VoiceComposer';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import { FASC_BUCKETS } from '../data/content';
-import { discoverNext, discoverTopics, answerQuality, Turn, Question } from '../lib/interview';
+import { pullsNext, synthesizePulls, answerQuality, Turn, Question } from '../lib/interview';
 import * as haptics from '../lib/haptics';
 
-const MIN_Q = 3;
-const MAX_Q = 5;
+// One required opener + one required negative turn are injected server-side, so
+// the cap is a safety net; the backend sets wrapUp when both sides are clear.
+const MAX_Q = 6;
 
 type Phase = 'loading' | 'asking' | 'finding' | 'error';
 
-export default function FascDiscoverScreen() {
+// Single adaptive interview for the day-to-day / environments lenses. Surfaces
+// the kinds of work (or cultures) you love and the ones you dislike, then hands
+// off to the result screen. You can stop early once there is enough to save.
+export default function FascPullsScreen() {
   const { state, patch, go } = useStore();
   const lens = state.fascBucket;
-  const bucket = FASC_BUCKETS.find((b) => b.key === lens) || FASC_BUCKETS[0];
+  const bucket = FASC_BUCKETS.find((b) => b.key === lens) || FASC_BUCKETS[1];
   const firstName = 'Noah';
 
   const [turns, setTurns] = React.useState<Turn[]>([]);
   const [current, setCurrent] = React.useState<Question | null>(null);
-  const [list, setList] = React.useState<string[]>([]);
   const [draft, setDraft] = React.useState('');
   const [phase, setPhase] = React.useState<Phase>('loading');
   const [errorMsg, setErrorMsg] = React.useState('');
   const pending = React.useRef<'question' | 'finish'>('question');
   const scrollRef = React.useRef<ScrollView>(null);
 
-  const applyQuestion = (q: Question) => {
-    haptics.select(); // interviewer poses a question
-    setCurrent(q);
-    if (q.listSoFar?.length) setList(q.listSoFar);
-    setPhase('asking');
-  };
-
   const loadFirst = React.useCallback(async () => {
     pending.current = 'question';
     setPhase('loading');
     try {
-      applyQuestion(await discoverNext(lens, []));
+      const q = await pullsNext(lens, []);
+      haptics.select();
+      setCurrent(q);
+      setPhase('asking');
     } catch {
       setErrorMsg('Could not reach the interviewer. Check your connection and try again.');
       setPhase('error');
@@ -65,18 +63,22 @@ export default function FascDiscoverScreen() {
 
   const finish = React.useCallback(
     async (allTurns: Turn[]) => {
+      if (!allTurns.length) return;
       pending.current = 'finish';
       setPhase('finding');
       try {
-        const topics = await discoverTopics(lens, firstName, allTurns);
+        const result = await synthesizePulls(lens, firstName, allTurns);
         haptics.success();
-        patch({ fascTopics: { ...state.fascTopics, [lens]: topics }, screen: 'fascTopics' });
+        patch({
+          fascPulls: { ...state.fascPulls, [lens]: { ...result, saved: false } },
+          screen: 'fascPullsResult',
+        });
       } catch {
         setErrorMsg('Could not pull that together. Your answers are safe, tap to try again.');
         setPhase('error');
       }
     },
-    [lens, patch, state.fascTopics],
+    [lens, patch, state.fascPulls],
   );
 
   const advance = React.useCallback(
@@ -85,7 +87,10 @@ export default function FascDiscoverScreen() {
       setCurrent(null);
       setPhase('loading');
       try {
-        applyQuestion(await discoverNext(lens, allTurns));
+        const q = await pullsNext(lens, allTurns);
+        haptics.select();
+        setCurrent(q);
+        setPhase('asking');
       } catch {
         setErrorMsg('Could not load the next question. Tap to try again.');
         setPhase('error');
@@ -121,7 +126,7 @@ export default function FascDiscoverScreen() {
             One sec.
           </T>
           <T variant="meta" style={{ marginTop: 8, textAlign: 'center' }}>
-            Reading back through your list.
+            Reading back through what you said.
           </T>
         </View>
       </SafeAreaView>
@@ -147,6 +152,8 @@ export default function FascDiscoverScreen() {
     );
   }
 
+  const canSaveEarly = turns.length >= 2;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -160,20 +167,6 @@ export default function FascDiscoverScreen() {
             <Text style={styles.pause}>Pause</Text>
           </Pressable>
         </View>
-
-        {/* your list so far */}
-        {list.length ? (
-          <View style={styles.listBlock}>
-            <Text style={styles.listLabel}>Your list so far</Text>
-            <View style={styles.chipWrap}>
-              {list.map((item) => (
-                <View key={item} style={styles.chip}>
-                  <Text style={styles.chipText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
 
         {/* thread */}
         <ScrollView
@@ -206,16 +199,16 @@ export default function FascDiscoverScreen() {
                 <Text style={styles.aiText}>{current.questionText}</Text>
               </View>
               {turns.length === 0 ? (
-                <Text style={styles.helper}>Name as many as come to mind, for any reason.</Text>
+                <Text style={styles.helper}>Focus on the actions, not the title or the result.</Text>
               ) : null}
             </>
           )}
         </ScrollView>
 
         {/* chill early-stop */}
-        {list.length >= 2 ? (
+        {canSaveEarly ? (
           <Pressable onPress={() => finish(turns)} style={styles.saveEarly} hitSlop={8}>
-            <Text style={styles.saveEarlyText}>Save these topics for now</Text>
+            <Text style={styles.saveEarlyText}>Save what we have for now</Text>
             <Ionicons name="arrow-forward" size={13} color={colors.link} />
           </Pressable>
         ) : null}
@@ -272,14 +265,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontFamily: font.bold, fontSize: 15, color: colors.ink },
   pause: { fontFamily: font.bold, fontSize: 14.5, color: colors.muted },
 
-  listBlock: { paddingHorizontal: 20, paddingBottom: 8 },
-  listLabel: { fontFamily: font.bold, fontSize: 10.5, letterSpacing: 0.7, textTransform: 'uppercase', color: colors.accentInk },
-  saveEarly: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8 },
-  saveEarlyText: { fontFamily: font.bold, fontSize: 13.5, color: colors.link },
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 9 },
-  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.lineStrong },
-  chipText: { fontFamily: font.bold, fontSize: 12.5, color: colors.inkSoft },
-
   thread: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 10 },
   bubble: { maxWidth: '86%', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 20 },
   ai: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderBottomLeftRadius: 6, ...shadow.soft },
@@ -290,24 +275,10 @@ const styles = StyleSheet.create({
   typing: { paddingVertical: 16 },
   tdot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted },
 
+  saveEarly: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8 },
+  saveEarlyText: { fontFamily: font.bold, fontSize: 13.5, color: colors.link },
+
   composer: { paddingHorizontal: 20 },
-  input: {
-    flex: 1,
-    minHeight: 48,
-    maxHeight: 130,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 13 : 8,
-    paddingBottom: Platform.OS === 'ios' ? 13 : 8,
-    fontFamily: font.medium,
-    fontSize: 15.5,
-    lineHeight: 21,
-    color: colors.ink,
-  },
-  send: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
 
   retryBtn: { marginTop: 22, backgroundColor: colors.accent, borderRadius: radius.pill, paddingHorizontal: 30, paddingVertical: 14 },
   retryText: { fontFamily: font.bold, fontSize: 15, color: colors.accentInk },

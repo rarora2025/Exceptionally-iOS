@@ -11,7 +11,12 @@ import { FASC_BUCKETS } from '../data/content';
 export default function FascBucketScreen() {
   const { state, patch, go } = useStore();
   const bucket = FASC_BUCKETS.find((b) => b.key === state.fascBucket) || FASC_BUCKETS[0];
-  const hasTopics = (state.fascTopics[bucket.key] || []).length > 0;
+  const isPulls = bucket.key !== 'domains';
+  const hasResult = isPulls
+    ? (state.fascPulls[bucket.key]?.pulls?.length ?? 0) > 0
+    : (state.fascTopics[bucket.key] || []).length > 0;
+  const startInterview = () => patch({ screen: isPulls ? 'fascPulls' : 'fascDiscover' });
+  const seeResult = () => patch({ screen: isPulls ? 'fascPullsResult' : 'fascTopics' });
 
   return (
     <Screen scroll={false} contentStyle={styles.wrap}>
@@ -35,26 +40,26 @@ export default function FascBucketScreen() {
       <View style={styles.stats}>
         <View>
           <Text style={styles.statNum}>~4 min</Text>
-          <Text style={styles.statLabel}>To surface your topics</Text>
+          <Text style={styles.statLabel}>{isPulls ? 'One short interview' : 'To surface your topics'}</Text>
         </View>
         <View>
-          <Text style={styles.statNum}>Then go deep</Text>
-          <Text style={styles.statLabel}>On the ones that matter</Text>
+          <Text style={styles.statNum}>{isPulls ? 'Both sides' : 'Then go deep'}</Text>
+          <Text style={styles.statLabel}>{isPulls ? 'What you love and dislike' : 'On the ones that matter'}</Text>
         </View>
       </View>
 
-      {hasTopics ? (
+      {hasResult ? (
         <>
-          <Button title="Start over" variant="dark" onPress={() => patch({ screen: 'fascDiscover' })} />
+          <Button title="Start over" variant="dark" onPress={startInterview} />
           <Button
-            title="See your topics"
+            title={isPulls ? 'See your results' : 'See your topics'}
             variant="secondary"
             style={{ marginTop: 10 }}
-            onPress={() => go('fascTopics')}
+            onPress={seeResult}
           />
         </>
       ) : (
-        <Button title="Start interview" variant="dark" onPress={() => patch({ screen: 'fascDiscover' })} />
+        <Button title="Start interview" variant="dark" onPress={startInterview} />
       )}
     </Screen>
   );

@@ -9,6 +9,7 @@ import { useStore } from '../state/store';
 import { useAuth } from '../state/auth';
 import * as haptics from '../lib/haptics';
 import { SUPER_STRENGTHS, EMOJI_OPTIONS, COLOR_OPTIONS, FASC_BUCKETS } from '../data/content';
+import { bucketEntry } from '../lib/fascNav';
 
 export default function ProfileScreen() {
   const { state, patch, go } = useStore();
@@ -37,7 +38,7 @@ export default function ProfileScreen() {
   };
 
   const openArtifact = (key: string) => { haptics.tap(); patch({ screen: 'artifact', artifactKey: key }); };
-  const openBucket = (key: string) => { haptics.tap(); patch({ screen: state.fascTopics[key]?.length ? 'fascTopics' : 'fascBucket', fascBucket: key, fascFrom: 'profile' }); };
+  const openBucket = (key: string) => { haptics.tap(); patch({ screen: bucketEntry(state, key), fascBucket: key, fascFrom: 'profile' }); };
   const pfpColor = state.pfpColor || colors.accent;
 
   return (

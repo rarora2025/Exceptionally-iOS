@@ -7,6 +7,7 @@ import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
 import * as haptics from '../lib/haptics';
 import { COMPOSER_CHIPS, HOME_FASCINATIONS, PROGRESS_CHECKLIST } from '../data/content';
+import { bucketEntry } from '../lib/fascNav';
 
 export default function HomeScreen() {
   const { state, patch } = useStore();
@@ -66,7 +67,7 @@ export default function HomeScreen() {
         {HOME_FASCINATIONS.map((f) => (
           <Pressable
             key={f.key}
-            onPress={() => { haptics.tap(); patch({ screen: state.fascTopics[f.key]?.length ? 'fascTopics' : 'fascBucket', fascBucket: f.key, fascFrom: 'home' }); }}
+            onPress={() => { haptics.tap(); patch({ screen: bucketEntry(state, f.key), fascBucket: f.key, fascFrom: 'home' }); }}
             style={styles.fascChip}
           >
             <Text style={styles.fascChipText}>{f.title}</Text>
