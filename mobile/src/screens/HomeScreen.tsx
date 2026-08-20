@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Text, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, T } from '../ui/kit';
+import { Screen, T, Wordmark } from '../ui/kit';
 import { TAB_BAR_SPACE } from '../ui/TabBar';
 import { colors, font, radius, shadow } from '../theme';
 import { useStore } from '../state/store';
@@ -30,6 +30,10 @@ export default function HomeScreen() {
 
   return (
     <Screen contentStyle={styles.wrap}>
+      <View style={styles.brand}>
+        <Wordmark size={22} />
+      </View>
+
       {/* composer */}
       <View style={[styles.composer, hasDraft && styles.composerActive]}>
         <T variant="cardTitle" style={styles.composerTitle}>
@@ -67,7 +71,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingTop: 42, paddingBottom: TAB_BAR_SPACE },
+  wrap: { paddingTop: 10, paddingBottom: TAB_BAR_SPACE },
+  brand: { marginBottom: 20 },
 
   composer: {
     backgroundColor: colors.surface,

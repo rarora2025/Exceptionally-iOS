@@ -41,6 +41,7 @@ export default function BucketCarousel() {
         snapToInterval={SNAP}
         decelerationRate="fast"
         directionalLockEnabled
+        nestedScrollEnabled
         contentContainerStyle={{ paddingRight: 34 }}
         onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / SNAP))}
       >
@@ -48,8 +49,8 @@ export default function BucketCarousel() {
           const items = itemsFor(state, b.key);
           return (
             <View key={b.key} style={{ width: CARD_W, marginRight: i < FASC_BUCKETS.length - 1 ? GAP : 0 }}>
-              <View style={styles.card}>
-                <Pressable onPress={() => open(b.key)} style={styles.cardHead}>
+              <Pressable onPress={() => open(b.key)} style={styles.card}>
+                <View style={styles.cardHead}>
                   <View style={[styles.tile, { backgroundColor: b.tint }]}>
                     <Text style={styles.emoji}>{b.emoji}</Text>
                   </View>
@@ -57,15 +58,15 @@ export default function BucketCarousel() {
                     <Text style={styles.cardTitle} numberOfLines={1}>{b.title}</Text>
                     <Text style={styles.cardMeta}>{items.length ? `${items.length} saved` : 'Nothing yet'}</Text>
                   </View>
-                </Pressable>
+                </View>
 
                 <View style={[styles.mid, !items.length && styles.midEmpty]}>
                   {items.length ? (
                     items.slice(0, 3).map((t) => (
-                      <Pressable key={t} onPress={() => open(b.key)} style={styles.item}>
+                      <View key={t} style={styles.item}>
                         <Text style={styles.itemText} numberOfLines={1}>{t}</Text>
                         <Ionicons name="chevron-forward" size={15} color={colors.muted} />
-                      </Pressable>
+                      </View>
                     ))
                   ) : (
                     <Text style={styles.emptyText}>{b.intro}</Text>
@@ -73,13 +74,13 @@ export default function BucketCarousel() {
                   {items.length > 3 ? <Text style={styles.more}>+{items.length - 3} more</Text> : null}
                 </View>
 
-                <Pressable onPress={() => open(b.key)} style={[styles.cta, items.length ? styles.ctaOpen : styles.ctaStart]}>
+                <View style={[styles.cta, items.length ? styles.ctaOpen : styles.ctaStart]}>
                   <Text style={[styles.ctaText, { color: items.length ? colors.onDark : colors.accentInk }]}>
                     {items.length ? 'View all' : 'Start the interview'}
                   </Text>
                   <Ionicons name="arrow-forward" size={15} color={items.length ? colors.onDark : colors.accentInk} />
-                </Pressable>
-              </View>
+                </View>
+              </Pressable>
             </View>
           );
         })}
