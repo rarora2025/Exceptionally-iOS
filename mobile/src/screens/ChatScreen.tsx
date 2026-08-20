@@ -174,9 +174,11 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.header}>
-          <Pressable onPress={() => go('home')} hitSlop={8}>
-            <Ionicons name="arrow-back" size={22} color={colors.muted} />
-          </Pressable>
+          <View style={styles.side}>
+            <Pressable onPress={() => go('home')} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color={colors.muted} />
+            </Pressable>
+          </View>
           {renaming ? (
             <TextInput
               value={renameText}
@@ -196,10 +198,12 @@ export default function ChatScreen() {
               <Ionicons name="pencil" size={12} color={colors.muted} />
             </Pressable>
           )}
-          <Pressable onPress={newChat} hitSlop={8} style={styles.newBtn}>
-            <Ionicons name="create-outline" size={17} color={colors.ink} />
-            <Text style={styles.newText}>New</Text>
-          </Pressable>
+          <View style={[styles.side, { alignItems: 'flex-end' }]}>
+            <Pressable onPress={newChat} hitSlop={8} style={styles.newBtn}>
+              <Ionicons name="create-outline" size={17} color={colors.ink} />
+              <Text style={styles.newText}>New</Text>
+            </Pressable>
+          </View>
         </View>
 
         <ScrollView
@@ -270,13 +274,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 4,
   },
-  headerBack: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: { fontFamily: font.bold, fontSize: 15, color: colors.muted },
+  side: { width: 80, justifyContent: 'center' },
   newBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.surface, ...shadow.soft },
   newText: { fontFamily: font.bold, fontSize: 13.5, color: colors.ink },
   titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 8 },
