@@ -117,10 +117,16 @@ export default function ChatScreen() {
   // plus the user's turn, so we replace the thread's messages wholesale.
   const reveal = (full: string, withUser: ChatMsg[]) => {
     let i = 0;
+    let lastBuzz = 0;
     setStreaming('');
     const run = () => {
       i = Math.min(full.length, i + 2);
       setStreaming(full.slice(0, i));
+      // Tick as the coach "types" back to you, a few times a second.
+      if (i - lastBuzz >= 18) {
+        haptics.select();
+        lastBuzz = i;
+      }
       if (i < full.length) {
         setTimeout(run, 14);
       } else {
@@ -250,7 +256,7 @@ export default function ChatScreen() {
         <View style={styles.composer}>
           <TextInput
             value={state.chatDraft}
-            onChangeText={(t) => { haptics.select(); patch({ chatDraft: t }); }}
+            onChangeText={(t) => patch({ chatDraft: t })}
             placeholder="Ask anything"
             placeholderTextColor={colors.muted}
             multiline

@@ -38,7 +38,7 @@ export default function HomeScreen() {
         </T>
         <TextInput
           value={state.problemDraft}
-          onChangeText={(t) => { haptics.select(); patch({ problemDraft: t }); }}
+          onChangeText={(t) => patch({ problemDraft: t })}
           placeholder={state.problemDraft ? '' : 'Should I take the Head of Strategy offer?'}
           placeholderTextColor={colors.muted}
           multiline

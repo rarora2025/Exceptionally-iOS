@@ -117,10 +117,7 @@ export default function VoiceComposer({
 
       <TextInput
         value={value}
-        onChangeText={(t) => {
-          haptics.select();
-          onChangeText(t);
-        }}
+        onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         multiline
