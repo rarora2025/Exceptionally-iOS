@@ -6,8 +6,12 @@ import { colors, font, radius, shadow } from '../theme';
 import { useStore, Screen } from '../state/store';
 import * as haptics from '../lib/haptics';
 
-const HOME_GROUP: Screen[] = ['home', 'chat', 'people', 'fascHub', 'fascBucket', 'fascSeed', 'fascInterview', 'fascResult'];
-const PROFILE_GROUP: Screen[] = ['profile', 'artifact'];
+const HOME_GROUP: Screen[] = ['home', 'chat', 'people'];
+const PROFILE_GROUP: Screen[] = [
+  'profile', 'artifact',
+  'fascHub', 'fascBucket', 'fascDiscover', 'fascTopics', 'fascPulls', 'fascPullsResult',
+  'fascSeed', 'fascInterview', 'fascResult',
+];
 const TOOLS_GROUP: Screen[] = ['tools', 'toolRun'];
 
 const TABS: { key: Screen; label: string; icon: string; group: Screen[] }[] = [
